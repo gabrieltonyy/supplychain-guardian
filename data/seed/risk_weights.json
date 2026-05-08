@@ -1,0 +1,17 @@
+{
+  "financial_weight": 0.30,
+  "geopolitical_weight": 0.25,
+  "logistics_weight": 0.20,
+  "weather_weight": 0.15,
+  "tariff_weight": 0.10,
+
+  "critical_threshold": 80,
+  "high_threshold": 60,
+  "medium_threshold": 40,
+  "low_threshold": 20,
+
+  "anomaly_zscore_threshold": 2.5,
+
+  "updated_by": "seed_system",
+  "version": "1.0.0"
+}

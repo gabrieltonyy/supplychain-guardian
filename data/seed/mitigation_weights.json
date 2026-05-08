@@ -1,0 +1,16 @@
+{
+  "cost_delta_weight": 0.30,
+  "lead_time_weight": 0.25,
+  "residual_risk_weight": 0.25,
+  "onboarding_weight": 0.10,
+  "confidence_weight": 0.10,
+
+  "auto_approval_cost_delta_pct": 20,
+  "max_allowed_residual_risk": 40,
+
+  "preferred_supplier_bonus": 0.08,
+  "approved_compliance_bonus": 0.05,
+
+  "updated_by": "seed_system",
+  "version": "1.0.0"
+}

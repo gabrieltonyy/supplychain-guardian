@@ -1,0 +1,212 @@
+[
+  {
+    "order_id": "ORD-001",
+    "supplier_id": "SUP-CN-001",
+    "supplier_name": "Shenzhen Precision Components",
+    "destination_country": "Kenya",
+    "destination": "Nairobi Industrial Park Warehouse",
+    "volume_units": 30000,
+    "risk_level": "HIGH",
+    "priority": "urgent",
+    "line_items": [
+      {
+        "sku": "SCG-CHIP-001",
+        "description": "Microcontroller Semiconductor Chip",
+        "quantity": 30000,
+        "unit": "pcs",
+        "unit_cost": 10.0,
+        "category": "electronics",
+        "hs_code": "854231"
+      }
+    ]
+  },
+  {
+    "order_id": "ORD-002",
+    "supplier_id": "SUP-DE-001",
+    "supplier_name": "EuroTech Components",
+    "destination_country": "Kenya",
+    "destination": "Mombasa Assembly Facility",
+    "volume_units": 12000,
+    "risk_level": "LOW",
+    "priority": "standard",
+    "line_items": [
+      {
+        "sku": "SCG-SENSOR-002",
+        "description": "Industrial Sensor Unit",
+        "quantity": 12000,
+        "unit": "pcs",
+        "unit_cost": 12.15,
+        "category": "industrial_components",
+        "hs_code": "903180"
+      }
+    ]
+  },
+  {
+    "order_id": "ORD-003",
+    "supplier_id": "SUP-IN-001",
+    "supplier_name": "Apex India Manufacturing",
+    "destination_country": "Kenya",
+    "destination": "Nairobi Electronics Hub",
+    "volume_units": 18000,
+    "risk_level": "MEDIUM",
+    "priority": "standard",
+    "line_items": [
+      {
+        "sku": "SCG-CTRL-003",
+        "description": "Embedded Control Board",
+        "quantity": 18000,
+        "unit": "pcs",
+        "unit_cost": 11.0,
+        "category": "electronics",
+        "hs_code": "853710"
+      }
+    ]
+  },
+  {
+    "order_id": "ORD-004",
+    "supplier_id": "SUP-VN-001",
+    "supplier_name": "VietPro Industrial",
+    "destination_country": "Kenya",
+    "destination": "Nakuru Packaging Center",
+    "volume_units": 45000,
+    "risk_level": "HIGH",
+    "priority": "urgent",
+    "line_items": [
+      {
+        "sku": "SCG-PACK-004",
+        "description": "Industrial Packaging Material",
+        "quantity": 45000,
+        "unit": "pcs",
+        "unit_cost": 10.15,
+        "category": "packaging",
+        "hs_code": "392390"
+      }
+    ]
+  },
+  {
+    "order_id": "ORD-005",
+    "supplier_id": "SUP-US-001",
+    "supplier_name": "NorthStar Micro Devices",
+    "destination_country": "Kenya",
+    "destination": "Secure Government Tech Facility",
+    "volume_units": 5000,
+    "risk_level": "HIGH",
+    "priority": "critical",
+    "line_items": [
+      {
+        "sku": "SCG-DUAL-005",
+        "description": "Dual-Use Navigation Processor",
+        "quantity": 5000,
+        "unit": "pcs",
+        "unit_cost": 13.4,
+        "category": "dual_use_electronics",
+        "hs_code": "854239"
+      }
+    ]
+  },
+  {
+    "order_id": "ORD-006",
+    "supplier_id": "SUP-KE-001",
+    "supplier_name": "Nairobi Industrial Supplies",
+    "destination_country": "Uganda",
+    "destination": "Kampala Agro Distribution Hub",
+    "volume_units": 25000,
+    "risk_level": "LOW",
+    "priority": "standard",
+    "line_items": [
+      {
+        "sku": "SCG-AGRO-006",
+        "description": "Agricultural Packaging Bags",
+        "quantity": 25000,
+        "unit": "pcs",
+        "unit_cost": 8.6,
+        "category": "agricultural_inputs",
+        "hs_code": "630533"
+      }
+    ]
+  },
+  {
+    "order_id": "ORD-007",
+    "supplier_id": "SUP-BR-001",
+    "supplier_name": "Brasil AgroChem Inputs",
+    "destination_country": "Kenya",
+    "destination": "Eldoret Agro Processing Plant",
+    "volume_units": 60000,
+    "risk_level": "MEDIUM",
+    "priority": "standard",
+    "line_items": [
+      {
+        "sku": "SCG-CHEM-007",
+        "description": "Agricultural Chemical Compound",
+        "quantity": 60000,
+        "unit": "kg",
+        "unit_cost": 7.9,
+        "category": "chemicals",
+        "hs_code": "310590"
+      }
+    ]
+  },
+  {
+    "order_id": "ORD-008",
+    "supplier_id": "SUP-TR-001",
+    "supplier_name": "Anatolia Machinery Works",
+    "destination_country": "Kenya",
+    "destination": "Mombasa Heavy Industry Zone",
+    "volume_units": 4000,
+    "risk_level": "MEDIUM",
+    "priority": "high",
+    "line_items": [
+      {
+        "sku": "SCG-MECH-008",
+        "description": "Industrial Conveyor Assembly",
+        "quantity": 4000,
+        "unit": "sets",
+        "unit_cost": 18.5,
+        "category": "industrial_machinery",
+        "hs_code": "842839"
+      }
+    ]
+  },
+  {
+    "order_id": "ORD-009",
+    "supplier_id": "SUP-RU-001",
+    "supplier_name": "Northern Metals Export",
+    "destination_country": "Kenya",
+    "destination": "Nairobi Industrial Park Warehouse",
+    "volume_units": 75000,
+    "risk_level": "CRITICAL",
+    "priority": "critical",
+    "line_items": [
+      {
+        "sku": "SCG-MTL-009",
+        "description": "Industrial Metal Alloy",
+        "quantity": 75000,
+        "unit": "kg",
+        "unit_cost": 6.7,
+        "category": "raw_materials",
+        "hs_code": "720449"
+      }
+    ]
+  },
+  {
+    "order_id": "ORD-010",
+    "supplier_id": "SUP-IR-001",
+    "supplier_name": "Iran Supply Co",
+    "destination_country": "Kenya",
+    "destination": "Restricted Materials Facility",
+    "volume_units": 10000,
+    "risk_level": "CRITICAL",
+    "priority": "critical",
+    "line_items": [
+      {
+        "sku": "SCG-RAW-010",
+        "description": "Restricted Industrial Raw Material",
+        "quantity": 10000,
+        "unit": "kg",
+        "unit_cost": 4.9,
+        "category": "raw_materials",
+        "hs_code": "381519"
+      }
+    ]
+  }
+]

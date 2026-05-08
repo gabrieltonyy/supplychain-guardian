@@ -1,0 +1,201 @@
+[
+  {
+    "supplier_id": "SUP-CN-001",
+    "signals": [
+      {
+        "signal_type": "financial",
+        "severity": 0.85,
+        "confidence": 0.95,
+        "source": "seed-finnhub",
+        "raw_value": {
+          "stock_proxy_change_pct": -17.0,
+          "credit_outlook": "negative"
+        }
+      },
+      {
+        "signal_type": "geopolitical",
+        "severity": 0.75,
+        "confidence": 0.90,
+        "source": "seed-gdelt",
+        "raw_value": {
+          "articles": 42,
+          "keywords": [
+            "trade restriction",
+            "port congestion",
+            "electronics tariffs"
+          ]
+        }
+      },
+      {
+        "signal_type": "logistics",
+        "severity": 0.60,
+        "confidence": 0.88,
+        "source": "seed-shipbob",
+        "raw_value": {
+          "delayed_shipments_pct": 38,
+          "warehouse_utilization_pct": 92
+        }
+      }
+    ]
+  },
+  {
+    "supplier_id": "SUP-DE-001",
+    "signals": [
+      {
+        "signal_type": "financial",
+        "severity": 0.18,
+        "confidence": 0.97,
+        "source": "seed-finnhub",
+        "raw_value": {
+          "stock_proxy_change_pct": 3.2,
+          "credit_outlook": "stable"
+        }
+      },
+      {
+        "signal_type": "logistics",
+        "severity": 0.12,
+        "confidence": 0.95,
+        "source": "seed-shipbob",
+        "raw_value": {
+          "delayed_shipments_pct": 4,
+          "warehouse_utilization_pct": 55
+        }
+      }
+    ]
+  },
+  {
+    "supplier_id": "SUP-IN-001",
+    "signals": [
+      {
+        "signal_type": "weather",
+        "severity": 0.40,
+        "confidence": 0.91,
+        "source": "seed-open-meteo",
+        "raw_value": {
+          "flood_risk": "moderate",
+          "rainfall_mm": 82
+        }
+      },
+      {
+        "signal_type": "financial",
+        "severity": 0.35,
+        "confidence": 0.92,
+        "source": "seed-finnhub",
+        "raw_value": {
+          "supplier_growth_pct": 4.8
+        }
+      }
+    ]
+  },
+  {
+    "supplier_id": "SUP-VN-001",
+    "signals": [
+      {
+        "signal_type": "weather",
+        "severity": 0.72,
+        "confidence": 0.94,
+        "source": "seed-open-meteo",
+        "raw_value": {
+          "storm_alert": true,
+          "flood_risk": "high"
+        }
+      },
+      {
+        "signal_type": "logistics",
+        "severity": 0.58,
+        "confidence": 0.90,
+        "source": "seed-shipbob",
+        "raw_value": {
+          "port_delay_days": 5
+        }
+      }
+    ]
+  },
+  {
+    "supplier_id": "SUP-US-001",
+    "signals": [
+      {
+        "signal_type": "tariff",
+        "severity": 0.30,
+        "confidence": 0.89,
+        "source": "seed-wits",
+        "raw_value": {
+          "tariff_change_pct": 6
+        }
+      },
+      {
+        "signal_type": "financial",
+        "severity": 0.22,
+        "confidence": 0.96,
+        "source": "seed-finnhub",
+        "raw_value": {
+          "credit_outlook": "stable"
+        }
+      }
+    ]
+  },
+  {
+    "supplier_id": "SUP-RU-001",
+    "signals": [
+      {
+        "signal_type": "geopolitical",
+        "severity": 0.95,
+        "confidence": 0.99,
+        "source": "seed-gdelt",
+        "raw_value": {
+          "sanctions_articles": 140,
+          "keywords": [
+            "trade sanctions",
+            "restricted exports"
+          ]
+        }
+      },
+      {
+        "signal_type": "tariff",
+        "severity": 0.80,
+        "confidence": 0.95,
+        "source": "seed-wits",
+        "raw_value": {
+          "tariff_change_pct": 25
+        }
+      }
+    ]
+  },
+  {
+    "supplier_id": "SUP-IR-001",
+    "signals": [
+      {
+        "signal_type": "geopolitical",
+        "severity": 1.0,
+        "confidence": 1.0,
+        "source": "seed-gdelt",
+        "raw_value": {
+          "sanctions_status": "blocked"
+        }
+      }
+    ]
+  },
+  {
+    "supplier_id": "SUP-AU-001",
+    "signals": [
+      {
+        "signal_type": "financial",
+        "severity": 0.15,
+        "confidence": 0.96,
+        "source": "seed-finnhub",
+        "raw_value": {
+          "commodity_market": "stable"
+        }
+      },
+      {
+        "signal_type": "weather",
+        "severity": 0.18,
+        "confidence": 0.92,
+        "source": "seed-open-meteo",
+        "raw_value": {
+          "wildfire_risk": "low"
+        }
+      }
+    ]
+  }
+]

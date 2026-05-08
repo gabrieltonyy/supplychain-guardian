@@ -13,6 +13,7 @@ from app.db.models.supplier import Supplier  # noqa: F401
 from app.db.models.risk_assessment import RiskAssessmentRecord  # noqa: F401
 from app.db.models.mitigation_plan import MitigationPlanRecord  # noqa: F401
 from app.db.models.rfq import RFQRecord  # noqa: F401
+from app.db.models.risk_history import SupplierRiskHistory  # noqa: F401
 from app.db.models.execution_record import ExecutionRecordModel  # noqa: F401
 from app.db.models.compliance_audit import ComplianceAuditLog  # noqa: F401
 from app.db.models.config import (  # noqa: F401

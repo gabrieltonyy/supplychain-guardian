@@ -1,0 +1,98 @@
+[
+  {
+    "supplier_id": "SUP-DE-001",
+    "expected_verdict": "cleared",
+    "notes": "Low-risk EU supplier with strong compliance posture and valid DPA coverage.",
+    "compliance_flags": {
+      "has_dpa": true,
+      "dual_use_goods": false,
+      "trade_restricted": false,
+      "sanctions_hit": false,
+      "missing_hs_codes": false
+    }
+  },
+  {
+    "supplier_id": "SUP-IN-001",
+    "expected_verdict": "flagged",
+    "notes": "Supplier requires GDPR transfer safeguards due to missing DPA.",
+    "compliance_flags": {
+      "has_dpa": false,
+      "dual_use_goods": false,
+      "trade_restricted": false,
+      "sanctions_hit": false,
+      "missing_hs_codes": false
+    }
+  },
+  {
+    "supplier_id": "SUP-VN-001",
+    "expected_verdict": "flagged",
+    "notes": "Weather disruption plus missing DPA should trigger compliance review.",
+    "compliance_flags": {
+      "has_dpa": false,
+      "dual_use_goods": false,
+      "trade_restricted": false,
+      "sanctions_hit": false,
+      "missing_hs_codes": false
+    }
+  },
+  {
+    "supplier_id": "SUP-US-001",
+    "expected_verdict": "flagged",
+    "notes": "Dual-use electronics require export-control review.",
+    "compliance_flags": {
+      "has_dpa": true,
+      "dual_use_goods": true,
+      "trade_restricted": false,
+      "sanctions_hit": false,
+      "missing_hs_codes": false
+    }
+  },
+  {
+    "supplier_id": "SUP-RU-001",
+    "expected_verdict": "blocked",
+    "notes": "Trade restrictions and geopolitical sanctions exposure.",
+    "compliance_flags": {
+      "has_dpa": false,
+      "dual_use_goods": false,
+      "trade_restricted": true,
+      "sanctions_hit": true,
+      "missing_hs_codes": false
+    }
+  },
+  {
+    "supplier_id": "SUP-IR-001",
+    "expected_verdict": "blocked",
+    "notes": "Hard sanctions block due to restricted country.",
+    "compliance_flags": {
+      "has_dpa": false,
+      "dual_use_goods": false,
+      "trade_restricted": true,
+      "sanctions_hit": true,
+      "missing_hs_codes": false
+    }
+  },
+  {
+    "supplier_id": "SUP-BR-001",
+    "expected_verdict": "flagged",
+    "notes": "Pending compliance review and incomplete onboarding profile.",
+    "compliance_flags": {
+      "has_dpa": false,
+      "dual_use_goods": false,
+      "trade_restricted": false,
+      "sanctions_hit": false,
+      "missing_hs_codes": true
+    }
+  },
+  {
+    "supplier_id": "SUP-PL-001",
+    "expected_verdict": "cleared",
+    "notes": "Pharmaceutical packaging supplier with clean compliance profile.",
+    "compliance_flags": {
+      "has_dpa": true,
+      "dual_use_goods": false,
+      "trade_restricted": false,
+      "sanctions_hit": false,
+      "missing_hs_codes": false
+    }
+  }
+]
