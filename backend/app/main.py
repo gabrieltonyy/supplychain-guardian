@@ -7,6 +7,7 @@ from app.api.v1.router import api_router
 from app.core.config import settings
 from app.core.exceptions import register_exception_handlers
 from app.core.logging import setup_logging, get_logger
+from app.api.routes.db_workflow import router as db_workflow_router
 
 
 # Initialize logging first
@@ -65,6 +66,8 @@ app.include_router(
     prefix=settings.API_V1_PREFIX,
 )
 
+app.include_router(db_workflow_router)
+
 
 @app.get("/", tags=["Root"])
 async def root():
@@ -77,3 +80,4 @@ async def root():
         "environment": settings.APP_ENV,
         "version": "0.1.0",
     }
+
