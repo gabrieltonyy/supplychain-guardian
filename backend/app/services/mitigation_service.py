@@ -4,7 +4,11 @@ from app.db.qdrant import search_similar_suppliers
 from app.engine.ranker import rank_scenarios
 from app.engine.simulator import simulate_switch
 from app.schemas.assessments import RiskAssessment
-from app.schemas.mitigation import MitigationPlan, RecommendedOption, SimulatedScenario
+from app.schemas.mitigation import (
+    MitigationPlan,
+    RecommendedOption,
+    SimulatedScenario,
+)
 
 
 class MitigationService:
@@ -65,13 +69,10 @@ class MitigationService:
         at_risk_supplier: dict,
     ) -> list[dict]:
         """
-        Mock hard-filtered supplier list.
+        Legacy mock hard-filtered supplier list.
 
-        Later this becomes a PostgreSQL query with:
-        - category matching,
-        - region exclusion,
-        - capacity requirements,
-        - compliance status filtering.
+        DB-backed workflows should pass candidate_suppliers directly
+        into generate_mitigation_plan().
         """
 
         _ = at_risk_supplier
@@ -128,8 +129,8 @@ class MitigationService:
         top_k: int = 5,
     ) -> list[dict]:
         """
-        Discover alternative suppliers using both:
-        - hard-filtered supplier lookup,
+        Legacy discovery using:
+        - hard-filtered mock supplier lookup,
         - vector similarity ranking.
         """
 
@@ -172,6 +173,9 @@ class MitigationService:
         supplier_id: str,
         risk_assessment: RiskAssessment,
         justification: str,
+        candidate_suppliers: list[dict] | None = None,
+        at_risk_supplier: dict | None = None,
+        active_order: dict | None = None,
     ) -> tuple[
         MitigationPlan,
         list[dict],
@@ -180,16 +184,48 @@ class MitigationService:
     ]:
         """
         Main mitigation workflow.
+
+        If candidate_suppliers is provided, it is used directly.
+        This enables DB-backed supplier discovery while preserving
+        the legacy mock/Qdrant fallback.
         """
 
-        at_risk_supplier = await self.get_at_risk_supplier(supplier_id)
+        if at_risk_supplier is None:
+            at_risk_supplier = await self.get_at_risk_supplier(supplier_id)
 
-        current_order = await self.get_active_order(supplier_id)
+        if active_order is None:
+            current_order = await self.get_active_order(supplier_id)
+        else:
+            current_order = active_order
 
-        candidates = await self.discover_candidates(
-            at_risk_supplier=at_risk_supplier,
-            risk_assessment=risk_assessment,
+        current_order["supplier_name"] = at_risk_supplier.get(
+            "name",
+            current_order.get("supplier_name"),
         )
+
+        for item in current_order.get("line_items", []):
+            item["unit_cost"] = at_risk_supplier.get(
+                "unit_cost",
+                item.get("unit_cost", 0),
+            )
+
+        if candidate_suppliers:
+            candidates = candidate_suppliers
+        else:
+            candidates = await self.discover_candidates(
+                at_risk_supplier=at_risk_supplier,
+                risk_assessment=risk_assessment,
+            )
+
+        if not candidates:
+            plan = MitigationPlan(
+                original_supplier_id=supplier_id,
+                risk_score=risk_assessment.score,
+                recommended_options=[],
+                justification=justification,
+            )
+
+            return plan, [], [], []
 
         scenarios = await asyncio.gather(
             *[

@@ -16,6 +16,9 @@ from app.db.models.rfq import RFQRecord  # noqa: F401
 from app.db.models.risk_history import SupplierRiskHistory  # noqa: F401
 from app.db.models.execution_record import ExecutionRecordModel  # noqa: F401
 from app.db.models.compliance_audit import ComplianceAuditLog  # noqa: F401
+from app.db.models.workflow_run import WorkflowRun  # noqa: F401
+from app.db.models.workflow_event import WorkflowEvent  # noqa: F401
+from app.db.models.active_order import ActiveOrder  # noqa: F401
 from app.db.models.config import (  # noqa: F401
     RiskWeightConfig,
     MitigationWeightConfig,

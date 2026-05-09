@@ -1,4 +1,4 @@
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from uuid import uuid4
 
 from sqlalchemy import (
@@ -27,6 +27,12 @@ class ExecutionRecordModel(Base):
         String(64),
         primary_key=True,
         default=lambda: str(uuid4()),
+    )
+
+    workflow_id: Mapped[str | None] = mapped_column(
+        String(128),
+        nullable=True,
+        index=True,
     )
 
     execution_id: Mapped[str] = mapped_column(

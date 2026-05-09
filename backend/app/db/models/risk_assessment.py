@@ -1,4 +1,4 @@
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from uuid import uuid4
 
 from sqlalchemy import (
@@ -28,6 +28,12 @@ class RiskAssessmentRecord(Base):
         String(64),
         primary_key=True,
         default=lambda: str(uuid4()),
+    )
+
+    workflow_id: Mapped[str | None] = mapped_column(
+        String(128),
+        nullable=True,
+        index=True,
     )
 
     supplier_id: Mapped[str] = mapped_column(
@@ -62,6 +68,21 @@ class RiskAssessmentRecord(Base):
     anomaly_detected: Mapped[bool] = mapped_column(
         default=False,
         nullable=False,
+    )
+
+    anomaly_direction: Mapped[str | None] = mapped_column(
+        String(32),
+        nullable=True,
+    )
+
+    anomaly_z_score: Mapped[float | None] = mapped_column(
+        Float,
+        nullable=True,
+    )
+
+    anomaly_baseline_mean: Mapped[float | None] = mapped_column(
+        Float,
+        nullable=True,
     )
 
     anomaly_data: Mapped[dict | None] = mapped_column(

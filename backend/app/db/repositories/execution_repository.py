@@ -53,8 +53,10 @@ class ExecutionRepository:
     async def save_execution_record(
         self,
         execution_record: ExecutionRecord,
+        workflow_id: str | None = None,
     ) -> ExecutionRecordModel:
         record = ExecutionRecordModel(
+            workflow_id=workflow_id,
             execution_id=execution_record.execution_id,
             mitigation_plan_id=execution_record.mitigation_plan_id,
             rfq_ids=[

@@ -18,8 +18,10 @@ class RiskRepository:
         assessment: RiskAssessment,
         anomaly_data: dict | None = None,
         reasoning_summary: str | None = None,
+        workflow_id: str | None = None,
     ) -> RiskAssessmentRecord:
         record = RiskAssessmentRecord(
+            workflow_id=workflow_id,
             supplier_id=assessment.supplier_id,
             score=assessment.score,
             level=assessment.level,
@@ -27,6 +29,21 @@ class RiskRepository:
             contributing_signals=assessment.contributing_signals,
             anomaly_detected=bool(
                 anomaly_data and anomaly_data.get("is_anomaly")
+            ),
+            anomaly_direction=(
+                anomaly_data.get("direction")
+                if anomaly_data
+                else None
+            ),
+            anomaly_z_score=(
+                anomaly_data.get("z_score")
+                if anomaly_data
+                else None
+            ),
+            anomaly_baseline_mean=(
+                anomaly_data.get("baseline_mean")
+                if anomaly_data
+                else None
             ),
             anomaly_data=anomaly_data,
             reasoning_summary=reasoning_summary,

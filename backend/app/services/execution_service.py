@@ -28,34 +28,45 @@ class ExecutionService:
     async def generate_execution_record(
         self,
         mitigation_plan: MitigationPlan,
+        candidate_suppliers: list[dict] | None = None,
+        active_order: dict | None = None,
     ) -> ExecutionRecord:
         """
         Main execution workflow.
+
+        Uses DB-backed supplier candidates and DB-backed active order
+        when provided. Falls back to legacy mock services only when
+        DB context is unavailable.
         """
 
         gate_result = pre_execution_gate(mitigation_plan)
 
-        suppliers = await asyncio.gather(
-            *[
-                mitigation_service.get_alternative_suppliers(
-                    {"id": mitigation_plan.original_supplier_id}
-                )
-            ]
-        )
+        if candidate_suppliers:
+            suppliers = candidate_suppliers
+        else:
+            suppliers = await mitigation_service.get_alternative_suppliers(
+                {"id": mitigation_plan.original_supplier_id}
+            )
 
         supplier_lookup = {
             supplier["id"]: supplier
-            for supplier in suppliers[0]
+            for supplier in suppliers
         }
 
-        current_order = await mitigation_service.get_active_order(
-            mitigation_plan.original_supplier_id
-        )
+        if active_order is None:
+            current_order = await mitigation_service.get_active_order(
+                mitigation_plan.original_supplier_id
+            )
+        else:
+            current_order = active_order
 
         rfqs = []
 
         for option in mitigation_plan.recommended_options:
-            supplier = supplier_lookup[option.supplier_id]
+            supplier = supplier_lookup.get(option.supplier_id)
+
+            if supplier is None:
+                continue
 
             rfq = generate_rfq(
                 option=option.model_dump(mode="json"),

@@ -18,8 +18,10 @@ class MitigationRepository:
         plan: MitigationPlan,
         candidate_suppliers: list[dict],
         simulated_scenarios: list[SimulatedScenario],
+        workflow_id: str | None = None,
     ) -> MitigationPlanRecord:
         record = MitigationPlanRecord(
+            workflow_id=workflow_id,
             original_supplier_id=plan.original_supplier_id,
             risk_score=plan.risk_score,
             recommended_options=[
@@ -29,6 +31,8 @@ class MitigationRepository:
             candidate_suppliers=candidate_suppliers,
             simulated_scenarios=[
                 scenario.model_dump(mode="json")
+                if hasattr(scenario, "model_dump")
+                else scenario
                 for scenario in simulated_scenarios
             ],
             justification=plan.justification,
