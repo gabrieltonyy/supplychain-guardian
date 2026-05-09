@@ -1,15 +1,14 @@
 from fastapi import APIRouter
-
 from fastapi import HTTPException, Query
-from app.db.session import AsyncSessionLocal
-from app.services.workflow_query_service import WorkflowQueryService
 
+from app.db.session import AsyncSessionLocal
 from app.orchestration.db_workflow_runner import (
     run_db_supply_chain_workflow,
 )
 from app.services.workflow_analytics_service import (
     WorkflowAnalyticsService,
 )
+from app.services.workflow_query_service import WorkflowQueryService
 
 
 router = APIRouter(
@@ -69,6 +68,15 @@ async def run_workflow(
             else None
         ),
         "reasoning_summary": state.get("reasoning_summary"),
+        "ai_reasoning_source": state.get(
+            "ai_reasoning_source",
+        ),
+        "mitigation_reasoning_summary": state.get(
+            "mitigation_reasoning_summary",
+        ),
+        "mitigation_reasoning_source": state.get(
+            "mitigation_reasoning_source",
+        ),
         "mitigation_plan": (
             state["mitigation_plan"].model_dump(mode="json")
             if state.get("mitigation_plan")
@@ -79,16 +87,29 @@ async def run_workflow(
             if state.get("execution_record")
             else None
         ),
+        "execution_reasoning_summary": state.get(
+            "execution_reasoning_summary",
+        ),
+        "execution_reasoning_source": state.get(
+            "execution_reasoning_source",
+        ),
         "compliance_verdict": (
             state.get("compliance_verdict").value
             if state.get("compliance_verdict")
             else None
+        ),
+        "compliance_reasoning_summary": state.get(
+            "compliance_reasoning_summary",
+        ),
+        "compliance_reasoning_source": state.get(
+            "compliance_reasoning_source",
         ),
         "workflow_complete": state.get(
             "workflow_complete",
             False,
         ),
     }
+
 
 @router.get("/runs")
 async def list_workflow_runs(
@@ -174,6 +195,7 @@ async def replay_workflow(
         "workflow_id": workflow_id,
         "replay": replay,
     }
+
 
 @router.get("/analytics/summary")
 async def workflow_summary():

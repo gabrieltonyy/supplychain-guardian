@@ -13,9 +13,10 @@ async def db_risk_analyst_node(
     Database-backed Risk Analyst node.
 
     Uses:
-    - seeded supplier signals
+    - live external supplier signals
     - PostgreSQL historical risk scores
     - DB-backed anomaly detection
+    - AMD-first LLM reasoning with local fallback
     """
 
     supplier_id = state["current_supplier_id"]
@@ -28,18 +29,43 @@ async def db_risk_analyst_node(
         region=region,
     )
 
+    signal_summary = [
+        {
+            "type": (
+                signal.signal_type.value
+                if hasattr(signal.signal_type, "value")
+                else str(signal.signal_type)
+            ),
+            "source": signal.source,
+            "severity": signal.severity,
+            "confidence": signal.confidence,
+            "region": signal.region,
+        }
+        for signal in signals
+    ]
+
     reasoning = await llm.ainvoke(
-        f"Supplier {supplier_id} risk score: "
-        f"{assessment.score}/100 ({assessment.level.value}).\n"
-        f"Factor breakdown: {assessment.factor_breakdown}.\n"
-        f"Anomaly detected: {anomaly.model_dump(mode='json')}.\n"
-        "In 2 sentences, explain the primary risk driver and recommended urgency. "
-        "Do not hallucinate suppliers or suggest mitigations."
+        f"Supplier: {supplier_id}\n"
+        f"Risk score: {assessment.score}/100\n"
+        f"Risk level: {assessment.level.value}\n"
+        f"Factor breakdown: {assessment.factor_breakdown}\n"
+        f"Contributing signals: {assessment.contributing_signals}\n"
+        f"Signal summary: {signal_summary}\n"
+        f"Anomaly: {anomaly.model_dump(mode='json')}\n\n"
+        "Write a concise operational risk explanation in 2 sentences. "
+        "Mention the strongest live signal sources. "
+        "State whether mitigation is needed. "
+        "Do not invent suppliers or unsupported facts."
     )
 
     state["risk_assessment"] = assessment
     state["anomaly_detection"] = anomaly
     state["reasoning_summary"] = reasoning
+    state["ai_reasoning_source"] = getattr(
+        llm,
+        "last_provider_used",
+        "unknown",
+    )
     state["risk_signals"] = signals
 
     state["should_mitigate"] = (
