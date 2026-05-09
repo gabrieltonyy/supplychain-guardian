@@ -1,48 +1,32 @@
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from typing import Any
 
-from app.core.config import settings
 from app.ingestion.base import BaseSignalFetcher
+from app.integrations.shipbob_client import shipbob_client
 from app.schemas.signals import SignalEvent, SignalType
 
 
 class LogisticsFetcher(BaseSignalFetcher):
-    """
-    Fetches logistics disruption indicators from
-    ShipBob-style fulfillment/shipping APIs.
-    """
-
     source_name = "shipbob"
 
     async def fetch(
         self,
         supplier_id: str,
         region: str,
-        warehouse_id: str,
+        warehouse_id: str | None = None,
     ) -> SignalEvent:
-        headers = {
-            "Authorization": f"Bearer {settings.SHIPBOB_API_KEY}",
-            "Content-Type": "application/json",
-        }
+        _ = warehouse_id
 
-        data = await self.get_json(
-            f"{settings.SHIPBOB_BASE_URL}/inventory",
-            headers=headers,
-            params={
-                "warehouse_id": warehouse_id,
-            },
-        )
+        data = await shipbob_client.get_channel()
 
         severity = self._calculate_logistics_severity(data)
-
-        confidence = 1.0 if settings.SHIPBOB_API_KEY else 0.5
 
         return SignalEvent(
             signal_type=SignalType.LOGISTICS,
             supplier_id=supplier_id,
             region=region,
             severity=severity,
-            confidence=confidence,
+            confidence=0.85 if not data.get("error") else 0.4,
             raw_value=data,
             source=self.source_name,
             fetched_at=datetime.now(UTC),
@@ -52,27 +36,15 @@ class LogisticsFetcher(BaseSignalFetcher):
         self,
         data: dict[str, Any],
     ) -> float:
-        """
-        Convert logistics operational issues into normalized severity.
-        """
+        if data.get("error"):
+            return 0.5
 
-        disruptions = data.get("disruptions", [])
-        delayed_shipments = data.get("delayed_shipments", 0)
-        warehouse_utilization = data.get("warehouse_utilization_pct", 0)
+        items = data.get("items", [])
 
-        disruption_factor = min(len(disruptions) / 10, 1.0)
+        if not items:
+            return 0.2
 
-        shipment_factor = min(delayed_shipments / 100, 1.0)
+        return 0.0
 
-        utilization_factor = min(
-            max((warehouse_utilization - 70) / 30, 0),
-            1.0,
-        )
 
-        severity = (
-            disruption_factor * 0.4
-            + shipment_factor * 0.35
-            + utilization_factor * 0.25
-        )
-
-        return round(min(severity, 1.0), 3)
+logistics_fetcher = LogisticsFetcher()

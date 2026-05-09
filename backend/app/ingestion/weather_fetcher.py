@@ -1,17 +1,12 @@
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from typing import Any
 
-from app.core.config import settings
 from app.ingestion.base import BaseSignalFetcher
+from app.integrations.openmeteo_client import openmeteo_client
 from app.schemas.signals import SignalEvent, SignalType
 
 
 class WeatherFetcher(BaseSignalFetcher):
-    """
-    Fetches weather forecast data and converts it into
-    normalized supplier risk signals.
-    """
-
     source_name = "open-meteo"
 
     async def fetch(
@@ -21,17 +16,9 @@ class WeatherFetcher(BaseSignalFetcher):
         supplier_id: str,
         region: str,
     ) -> SignalEvent:
-        params = {
-            "latitude": lat,
-            "longitude": lon,
-            "daily": "weathercode,precipitation_sum,windspeed_10m_max",
-            "forecast_days": 7,
-            "timezone": "UTC",
-        }
-
-        data = await self.get_json(
-            settings.OPEN_METEO_BASE_URL,
-            params=params,
+        data = await openmeteo_client.get_current_weather(
+            latitude=lat,
+            longitude=lon,
         )
 
         severity = self._calculate_weather_severity(data)
@@ -51,21 +38,26 @@ class WeatherFetcher(BaseSignalFetcher):
         self,
         data: dict[str, Any],
     ) -> float:
-        """
-        Convert weather forecast values into a 0.0–1.0 risk severity.
-        """
+        current = data.get("current", {})
 
-        daily = data.get("daily", {})
+        precipitation = float(current.get("precipitation") or 0)
+        wind_speed = float(current.get("wind_speed_10m") or 0)
+        temperature = float(current.get("temperature_2m") or 0)
 
-        precipitation_values = daily.get("precipitation_sum", []) or [0]
-        wind_values = daily.get("windspeed_10m_max", []) or [0]
+        precipitation_score = min(precipitation / 20, 1.0)
+        wind_score = min(wind_speed / 60, 1.0)
 
-        max_precip = max(precipitation_values)
-        max_wind = max(wind_values)
+        temperature_score = 0.0
+        if temperature >= 40 or temperature <= -5:
+            temperature_score = 1.0
 
-        precipitation_score = min(max_precip / 100, 1.0)
-        wind_score = min(max_wind / 120, 1.0)
-
-        severity = (precipitation_score * 0.6) + (wind_score * 0.4)
+        severity = (
+            precipitation_score * 0.45
+            + wind_score * 0.4
+            + temperature_score * 0.15
+        )
 
         return round(min(severity, 1.0), 3)
+
+
+weather_fetcher = WeatherFetcher()

@@ -1,17 +1,12 @@
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from typing import Any
 
-from app.core.config import settings
 from app.ingestion.base import BaseSignalFetcher
+from app.integrations.gdelt_client import gdelt_client
 from app.schemas.signals import SignalEvent, SignalType
 
 
 class GeopoliticalFetcher(BaseSignalFetcher):
-    """
-    Fetches geopolitical instability indicators
-    from GDELT-style event feeds.
-    """
-
     source_name = "gdelt"
 
     async def fetch(
@@ -20,26 +15,21 @@ class GeopoliticalFetcher(BaseSignalFetcher):
         region: str,
         query: str,
     ) -> SignalEvent:
-        params = {
-            "query": query,
-            "mode": "ArtList",
-            "maxrecords": 50,
-            "format": "json",
-        }
-
-        data = await self.get_json(
-            f"{settings.GDELT_BASE_URL}/doc/doc",
-            params=params,
+        data = await gdelt_client.search_articles(
+            query=query,
+            max_records=50,
         )
 
         severity = self._calculate_geopolitical_severity(data)
+
+        confidence = 0.5 if data.get("rate_limited") else 0.9
 
         return SignalEvent(
             signal_type=SignalType.GEOPOLITICAL,
             supplier_id=supplier_id,
             region=region,
             severity=severity,
-            confidence=0.9,
+            confidence=confidence,
             raw_value=data,
             source=self.source_name,
             fetched_at=datetime.now(UTC),
@@ -49,16 +39,13 @@ class GeopoliticalFetcher(BaseSignalFetcher):
         self,
         data: dict[str, Any],
     ) -> float:
-        """
-        Convert geopolitical activity into a normalized risk score.
-        """
+        if data.get("rate_limited"):
+            return 0.0
 
         articles = data.get("articles", [])
 
         if not articles:
             return 0.0
-
-        article_count = len(articles)
 
         tension_keywords = [
             "war",
@@ -70,6 +57,10 @@ class GeopoliticalFetcher(BaseSignalFetcher):
             "trade restriction",
             "tariff",
             "embargo",
+            "export control",
+            "restriction",
+            "strike",
+            "shutdown",
         ]
 
         keyword_hits = 0
@@ -80,9 +71,12 @@ class GeopoliticalFetcher(BaseSignalFetcher):
             if any(keyword in title for keyword in tension_keywords):
                 keyword_hits += 1
 
-        article_factor = min(article_count / 50, 1.0)
-        tension_factor = min(keyword_hits / article_count, 1.0)
+        article_factor = min(len(articles) / 50, 1.0)
+        tension_factor = min(keyword_hits / len(articles), 1.0)
 
         severity = (article_factor * 0.4) + (tension_factor * 0.6)
 
         return round(min(severity, 1.0), 3)
+
+
+geopolitical_fetcher = GeopoliticalFetcher()

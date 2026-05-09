@@ -1,17 +1,12 @@
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from typing import Any
 
-from app.core.config import settings
 from app.ingestion.base import BaseSignalFetcher
+from app.integrations.finnhub_client import finnhub_client
 from app.schemas.signals import SignalEvent, SignalType
 
 
 class FinancialFetcher(BaseSignalFetcher):
-    """
-    Fetches financial health indicators for supplier-linked companies.
-    Uses Finnhub-style company quote data.
-    """
-
     source_name = "finnhub"
 
     async def fetch(
@@ -20,26 +15,16 @@ class FinancialFetcher(BaseSignalFetcher):
         region: str,
         symbol: str,
     ) -> SignalEvent:
-        params = {
-            "symbol": symbol,
-            "token": settings.FINNHUB_API_KEY,
-        }
-
-        data = await self.get_json(
-            f"{settings.FINNHUB_BASE_URL}/quote",
-            params=params,
-        )
+        data = await finnhub_client.get_quote(symbol=symbol)
 
         severity = self._calculate_financial_severity(data)
-
-        confidence = 1.0 if settings.FINNHUB_API_KEY else 0.5
 
         return SignalEvent(
             signal_type=SignalType.FINANCIAL,
             supplier_id=supplier_id,
             region=region,
             severity=severity,
-            confidence=confidence,
+            confidence=1.0,
             raw_value=data,
             source=self.source_name,
             fetched_at=datetime.now(UTC),
@@ -49,21 +34,11 @@ class FinancialFetcher(BaseSignalFetcher):
         self,
         data: dict[str, Any],
     ) -> float:
-        """
-        Convert stock movement into financial risk severity.
-
-        Finnhub quote fields:
-        c  = current price
-        pc = previous close
-        dp = percent change
-        """
-
         percent_change = data.get("dp")
 
         if percent_change is None:
             return 0.3
 
-        # Negative price movement increases supplier financial risk.
         if percent_change >= 0:
             return 0.1
 
@@ -72,6 +47,7 @@ class FinancialFetcher(BaseSignalFetcher):
         if decline >= 20:
             return 1.0
 
-        severity = decline / 20
+        return round(min(decline / 20, 1.0), 3)
 
-        return round(min(severity, 1.0), 3)
+
+financial_fetcher = FinancialFetcher()
