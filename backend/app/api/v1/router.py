@@ -10,6 +10,7 @@ from app.api.v1.endpoints.workflow import router as workflow_router
 
 api_router = APIRouter()
 
+# Register sub‑routers
 api_router.include_router(health_router)
 api_router.include_router(risk_router)
 api_router.include_router(mitigation_router)

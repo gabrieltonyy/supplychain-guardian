@@ -9,7 +9,6 @@ from app.core.exceptions import register_exception_handlers
 from app.core.logging import setup_logging, get_logger
 from app.api.routes.db_workflow import router as db_workflow_router
 
-
 # Initialize logging first
 setup_logging()
 
@@ -45,7 +44,6 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-
 # CORS
 app.add_middleware(
     CORSMiddleware,
@@ -55,10 +53,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
 # Register exception handlers
 register_exception_handlers(app)
-
 
 # Register API routes
 app.include_router(
@@ -66,6 +62,7 @@ app.include_router(
     prefix=settings.API_V1_PREFIX,
 )
 
+# Additional database-workflow router
 app.include_router(db_workflow_router)
 
 
@@ -80,4 +77,3 @@ async def root():
         "environment": settings.APP_ENV,
         "version": "0.1.0",
     }
-

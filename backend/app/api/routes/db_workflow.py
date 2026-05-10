@@ -1,5 +1,4 @@
-from fastapi import APIRouter
-from fastapi import HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query
 
 from app.db.session import AsyncSessionLocal
 from app.orchestration.db_workflow_runner import (
@@ -9,7 +8,6 @@ from app.services.workflow_analytics_service import (
     WorkflowAnalyticsService,
 )
 from app.services.workflow_query_service import WorkflowQueryService
-
 
 router = APIRouter(
     prefix="/api/v1/db-workflow",
@@ -24,7 +22,6 @@ async def run_workflow(
     """
     Run database-backed supply chain workflow.
     """
-
     try:
         state = await run_db_supply_chain_workflow(
             supplier_id=supplier_id,

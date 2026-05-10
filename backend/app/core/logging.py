@@ -4,11 +4,9 @@ from logging.config import dictConfig
 
 from app.core.config import settings
 
-
 LOGGING_CONFIG = {
     "version": 1,
     "disable_existing_loggers": False,
-
     "formatters": {
         "default": {
             "format": (
@@ -24,7 +22,6 @@ LOGGING_CONFIG = {
             ),
         },
     },
-
     "handlers": {
         "console": {
             "class": "logging.StreamHandler",
@@ -32,12 +29,10 @@ LOGGING_CONFIG = {
             "stream": sys.stdout,
         },
     },
-
     "root": {
         "level": settings.LOG_LEVEL,
         "handlers": ["console"],
     },
-
     "loggers": {
         "uvicorn": {
             "level": settings.LOG_LEVEL,

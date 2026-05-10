@@ -13,7 +13,6 @@ from app.schemas.rfqs import (
 )
 from app.services.rfq_service import RFQService
 
-
 router = APIRouter(
     prefix="/rfqs",
     tags=["RFQs"],

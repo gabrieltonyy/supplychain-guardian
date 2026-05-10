@@ -25,7 +25,7 @@ class RFQService:
     ) -> tuple[list[RFQRecord], int]:
         stmt = select(RFQRecord)
         count_stmt = select(func.count(RFQRecord.id))
-        filters = []
+        filters: list = []
 
         if status and status.upper() != "ALL":
             filters.append(RFQRecord.status == self._parse_status(status))
@@ -66,7 +66,6 @@ class RFQService:
                 )
             )
         )
-
         return result.scalar_one_or_none()
 
     async def approve(
@@ -125,7 +124,6 @@ class RFQService:
             .where(RFQActionHistory.rfq_record_id == rfq.id)
             .order_by(RFQActionHistory.created_at.desc())
         )
-
         return list(result.scalars().all())
 
     async def _transition(
@@ -175,5 +173,4 @@ class RFQService:
     def _status_name(self, status: RFQStatus | str) -> str:
         if isinstance(status, RFQStatus):
             return status.name
-
         return str(status).upper()
