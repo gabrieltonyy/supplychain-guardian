@@ -2,15 +2,15 @@
 
 import { useMemo, useState } from "react";
 import type { ComponentType } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertCircle,
-  ArrowRight,
   CheckCircle2,
   Clock3,
   Filter,
   Loader2,
   RadioTower,
+  RefreshCcw,
   Search,
   ShieldCheck,
 } from "lucide-react";
@@ -24,37 +24,40 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { apiClient } from "@/lib/api-client";
-import type { ReplayResponse } from "@/lib/api-types";
-import {
-  normalizeWorkflowReplay,
-  type NormalizedRFQ,
-} from "@/lib/workflow-normalizers";
+import type { RFQ } from "@/lib/api-types";
+import { formatCurrency, formatDate, getRfqTargetPrice, normalizeStatus } from "@/lib/utils";
 
-type RFQStatus = NormalizedRFQ["status"];
-type StatusFilter = RFQStatus | "All";
+type RFQReviewStatus =
+  | "ALL"
+  | "DRAFT"
+  | "PENDING_APPROVAL"
+  | "APPROVED"
+  | "REVIEW_REQUESTED"
+  | "REJECTED"
+  | "COMPLIANCE_REVIEW";
 
-const statusOptions: StatusFilter[] = [
-  "All",
-  "Pending Approval",
-  "Approved",
-  "Compliance Review",
-  "Draft",
-  "Rejected",
+type RFQAction = "approve" | "request-review" | "reject";
+
+const statusOptions: Array<{ value: RFQReviewStatus; label: string }> = [
+  { value: "ALL", label: "All statuses" },
+  { value: "PENDING_APPROVAL", label: "Pending Approval" },
+  { value: "APPROVED", label: "Approved" },
+  { value: "REVIEW_REQUESTED", label: "Review Requested" },
+  { value: "COMPLIANCE_REVIEW", label: "Compliance Review" },
+  { value: "DRAFT", label: "Draft" },
+  { value: "REJECTED", label: "Rejected" },
 ];
 
-function isReplayResponse(value: ReplayResponse | null): value is ReplayResponse {
-  return Boolean(value);
-}
-
-function getStatusClass(status: RFQStatus) {
+function getStatusClass(status?: string | null) {
   switch (status) {
-    case "Pending Approval":
+    case "PENDING_APPROVAL":
       return "bg-orange-50 text-orange-700";
-    case "Approved":
+    case "APPROVED":
       return "bg-emerald-50 text-emerald-700";
-    case "Compliance Review":
+    case "COMPLIANCE_REVIEW":
+    case "REVIEW_REQUESTED":
       return "bg-red-50 text-red-700";
-    case "Rejected":
+    case "REJECTED":
       return "bg-slate-200 text-slate-700";
     default:
       return "bg-slate-100 text-slate-700";
@@ -62,64 +65,85 @@ function getStatusClass(status: RFQStatus) {
 }
 
 export default function RFQsPage() {
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>("All");
-  const [localStatuses, setLocalStatuses] = useState<Record<string, RFQStatus>>({});
+  const [statusFilter, setStatusFilter] = useState<RFQReviewStatus>("ALL");
+  const [mutatingId, setMutatingId] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<{ tone: "success" | "error"; message: string } | null>(null);
 
-  const workflowsQuery = useQuery({
-    queryKey: ["workflow-runs-rfqs"],
-    queryFn: async () => {
-      const runs = await apiClient.listWorkflowRuns(10);
+  const allRfqsQuery = useQuery({
+    queryKey: ["rfqs", "all-counts"],
+    queryFn: () => apiClient.listRFQs({ limit: 200 }),
+  });
 
-      const replayResults = await Promise.all(
-        runs.runs.map(async (run) => {
-          try {
-            return await apiClient.getWorkflowReplay(run.workflow_id);
-          } catch {
-            return null;
-          }
-        })
-      );
+  const rfqsQuery = useQuery({
+    queryKey: ["rfqs", search, statusFilter],
+    queryFn: () =>
+      apiClient.listRFQs({
+        search: search.trim() || undefined,
+        status: statusFilter,
+        limit: 100,
+      }),
+  });
 
-      return replayResults.filter(isReplayResponse);
+  const actionMutation = useMutation({
+    mutationFn: async ({ rfqId, action }: { rfqId: string; action: RFQAction }) => {
+      setMutatingId(rfqId);
+
+      if (action === "approve") {
+        return apiClient.approveRFQ(rfqId, "Approved from RFQ Decision Center");
+      }
+
+      if (action === "request-review") {
+        return apiClient.requestRFQReview(rfqId, "Review requested from RFQ Decision Center");
+      }
+
+      return apiClient.rejectRFQ(rfqId, "Rejected from RFQ Decision Center");
+    },
+    onSuccess: async (response) => {
+      setFeedback({
+        tone: "success",
+        message: `${response.rfq.rfq_id} updated to ${statusLabel(response.rfq.status)}.`,
+      });
+      await queryClient.invalidateQueries({ queryKey: ["rfqs"] });
+    },
+    onError: (error) => {
+      setFeedback({
+        tone: "error",
+        message: error instanceof Error ? error.message : "RFQ action failed",
+      });
+    },
+    onSettled: () => {
+      setMutatingId(null);
     },
   });
 
-  const rfqs = useMemo(() => {
-    const normalized =
-      workflowsQuery.data?.flatMap((replay) =>
-        normalizeWorkflowReplay(replay.replay, replay.workflow_id).rfqs
-      ) ?? [];
+  const rfqs = rfqsQuery.data?.rfqs ?? [];
+  const loadError = rfqsQuery.error ?? allRfqsQuery.error;
 
-    return normalized.map((rfq) => ({
-      ...rfq,
-      status: localStatuses[rfq.id] ?? rfq.status,
-    }));
-  }, [localStatuses, workflowsQuery.data]);
+  const counts = useMemo(
+    () => {
+      const allRfqs = allRfqsQuery.data?.rfqs ?? [];
 
-  const filtered = rfqs.filter((rfq) => {
-    const query = search.toLowerCase();
-    const matchesSearch =
-      rfq.supplierId.toLowerCase().includes(query) ||
-      rfq.supplierName.toLowerCase().includes(query) ||
-      rfq.originalSupplierId?.toLowerCase().includes(query) ||
-      rfq.id.toLowerCase().includes(query);
+      return {
+        pending: allRfqs.filter((rfq) => rfq.status === "PENDING_APPROVAL").length,
+        approved: allRfqs.filter((rfq) => rfq.status === "APPROVED").length,
+        compliance: allRfqs.filter((rfq) =>
+          ["COMPLIANCE_REVIEW", "REVIEW_REQUESTED"].includes(rfq.status ?? "")
+        ).length,
+        total: allRfqsQuery.data?.total ?? allRfqs.length,
+      };
+    },
+    [allRfqsQuery.data]
+  );
 
-    const matchesStatus =
-      statusFilter === "All" || rfq.status === statusFilter;
+  function runAction(rfq: RFQ, action: RFQAction) {
+    const rfqId = rfq.rfq_id ?? rfq.id;
 
-    return matchesSearch && matchesStatus;
-  });
+    if (!rfqId) return;
 
-  const counts = {
-    pending: rfqs.filter((rfq) => rfq.status === "Pending Approval").length,
-    approved: rfqs.filter((rfq) => rfq.status === "Approved").length,
-    compliance: rfqs.filter((rfq) => rfq.status === "Compliance Review").length,
-    total: rfqs.length,
-  };
-
-  function updateLocalStatus(id: string, status: RFQStatus) {
-    setLocalStatuses((current) => ({ ...current, [id]: status }));
+    setFeedback(null);
+    actionMutation.mutate({ rfqId, action });
   }
 
   return (
@@ -130,18 +154,26 @@ export default function RFQsPage() {
             RFQ Decision Center
           </h1>
           <p className="mt-2 max-w-3xl text-slate-600">
-            Compare alternate suppliers, review approval blockers, and decide
-            which sourcing action should move forward.
+            Compare alternate suppliers, review approval blockers, and persist
+            sourcing decisions to the backend audit trail.
           </p>
         </div>
 
-        <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm">
-          <div className="font-semibold text-blue-900">Review-only actions</div>
-          <div className="mt-1 text-blue-700">
-            Approval controls update this browser session only. Backend
-            persistence is not connected yet.
-          </div>
-        </div>
+        <Button
+          variant="outline"
+          onClick={() => {
+            allRfqsQuery.refetch();
+            rfqsQuery.refetch();
+          }}
+          disabled={allRfqsQuery.isFetching || rfqsQuery.isFetching}
+        >
+          {allRfqsQuery.isFetching || rfqsQuery.isFetching ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <RefreshCcw className="mr-2 h-4 w-4" />
+          )}
+          Refresh
+        </Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
@@ -154,28 +186,40 @@ export default function RFQsPage() {
         <OverviewCard
           title="Approved"
           value={counts.approved}
-          detail="Marked ready in review"
+          detail="Persisted approval decisions"
           icon={CheckCircle2}
         />
         <OverviewCard
           title="Compliance Review"
           value={counts.compliance}
-          detail="Need policy clearance"
+          detail="Review or compliance queue"
           icon={ShieldCheck}
         />
         <OverviewCard
           title="Total RFQs"
           value={counts.total}
-          detail="From recent workflows"
+          detail="Backend RFQ records"
           icon={RadioTower}
         />
       </div>
+
+      {feedback ? (
+        <div
+          className={`rounded-lg border px-4 py-3 text-sm ${
+            feedback.tone === "success"
+              ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+              : "border-red-200 bg-red-50 text-red-900"
+          }`}
+        >
+          {feedback.message}
+        </div>
+      ) : null}
 
       <Card>
         <CardHeader>
           <CardTitle>Find RFQs</CardTitle>
           <CardDescription>
-            Search by supplier, RFQ ID, or original supplier and filter by review status.
+            Search by supplier name, supplier code, RFQ ID, or workflow context.
           </CardDescription>
         </CardHeader>
 
@@ -194,12 +238,12 @@ export default function RFQsPage() {
             <Filter className="absolute left-3 top-3.5 h-4 w-4 text-slate-400" />
             <select
               value={statusFilter}
-              onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}
+              onChange={(event) => setStatusFilter(event.target.value as RFQReviewStatus)}
               className="h-11 w-full rounded-lg border border-slate-200 bg-white pl-10 pr-4 text-sm outline-none transition focus:border-slate-400"
             >
               {statusOptions.map((status) => (
-                <option key={status} value={status}>
-                  {status === "All" ? "All statuses" : status}
+                <option key={status.value} value={status.value}>
+                  {status.label}
                 </option>
               ))}
             </select>
@@ -211,17 +255,17 @@ export default function RFQsPage() {
         <CardHeader>
           <CardTitle>Supplier RFQ Recommendations</CardTitle>
           <CardDescription>
-            Compare price, lead time, risk, and AI rationale before acting.
+            Compare price, lead time, risk, and review status before acting.
           </CardDescription>
         </CardHeader>
 
         <CardContent>
-          {workflowsQuery.isLoading ? (
+          {rfqsQuery.isLoading || allRfqsQuery.isLoading ? (
             <div className="flex items-center gap-2 py-8 text-sm text-slate-600">
               <Loader2 className="h-4 w-4 animate-spin" />
               Loading RFQ recommendations
             </div>
-          ) : workflowsQuery.isError ? (
+          ) : rfqsQuery.isError || allRfqsQuery.isError ? (
             <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4">
               <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-700" />
               <div>
@@ -229,91 +273,103 @@ export default function RFQsPage() {
                   Failed to load RFQs
                 </div>
                 <p className="mt-1 text-sm text-red-800">
-                  {workflowsQuery.error instanceof Error
-                    ? workflowsQuery.error.message
+                  {loadError instanceof Error
+                    ? loadError.message
                     : "Unknown backend error"}
                 </p>
               </div>
             </div>
-          ) : filtered.length ? (
+          ) : rfqs.length ? (
             <div className="space-y-4">
-              {filtered.map((rfq) => (
-                <div key={rfq.id} className="rounded-lg border bg-white p-5">
-                  <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <div className="break-all font-semibold text-slate-950">
-                          {rfq.originalSupplierId ?? "Original supplier"}
+              {rfqs.map((rfq) => {
+                const rfqId = rfq.rfq_id ?? rfq.id ?? "unknown-rfq";
+                const supplierCode = rfq.supplier_code ?? rfq.supplier_id ?? "Unknown code";
+                const isMutating = mutatingId === rfqId && actionMutation.isPending;
+
+                return (
+                  <div key={rfqId} className="rounded-lg border bg-white p-5">
+                    <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <div className="min-w-0 font-semibold text-slate-950">
+                            <div className="truncate">{rfq.supplier_name ?? "Unknown supplier"}</div>
+                            <div className="font-mono text-xs font-normal text-slate-500">
+                              {supplierCode}
+                            </div>
+                          </div>
+                          <span
+                            className={`rounded-full px-2 py-0.5 text-xs font-semibold ${getStatusClass(
+                              rfq.status
+                            )}`}
+                          >
+                            {statusLabel(rfq.status)}
+                          </span>
                         </div>
-                        <ArrowRight className="h-4 w-4 text-slate-400" />
-                        <div className="break-all font-semibold text-slate-950">
-                          {rfq.supplierName}
+
+                        <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-400">
+                          <span className="break-all font-mono">RFQ {rfqId}</span>
+                          {rfq.workflow_id ? (
+                            <span className="break-all font-mono">Workflow {rfq.workflow_id}</span>
+                          ) : null}
                         </div>
-                        <span
-                          className={`rounded-full px-2 py-0.5 text-xs font-semibold ${getStatusClass(
-                            rfq.status
-                          )}`}
+
+                        <div className="mt-3 grid gap-3 md:grid-cols-3">
+                          <DataTile label="Price" value={formatRFQPrice(rfq)} />
+                          <DataTile label="Lead Time" value={formatLeadTime(rfq)} />
+                          <DataTile label="Risk" value={rfq.risk_summary ?? "See workflow risk"} />
+                        </div>
+
+                        <div className="mt-4 rounded-lg bg-slate-50 p-3">
+                          <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                            Review Notes
+                          </div>
+                          <div className="mt-1 text-sm text-slate-700">
+                            {rfq.notes ??
+                              "Backend-persisted RFQ awaiting procurement review."}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex w-full flex-col gap-2 xl:w-44">
+                        <Button
+                          onClick={() => runAction(rfq, "approve")}
+                          disabled={isMutating || rfq.status === "APPROVED"}
                         >
-                          {rfq.status}
-                        </span>
-                      </div>
-
-                      <div className="mt-1 break-all font-mono text-xs text-slate-400">
-                        RFQ {rfq.id}
-                      </div>
-
-                      <div className="mt-3 grid gap-3 md:grid-cols-3">
-                        <DataTile label="Price" value={rfq.price} />
-                        <DataTile label="Lead Time" value={rfq.leadTime} />
-                        <DataTile label="Risk" value={rfq.risk} />
-                      </div>
-
-                      <div className="mt-4 rounded-lg bg-slate-50 p-3">
-                        <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                          Why this matters
+                          {isMutating ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                          Approve RFQ
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => runAction(rfq, "request-review")}
+                          disabled={
+                            isMutating ||
+                            rfq.status === "REVIEW_REQUESTED" ||
+                            rfq.status === "COMPLIANCE_REVIEW"
+                          }
+                        >
+                          Request Review
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => runAction(rfq, "reject")}
+                          disabled={isMutating || rfq.status === "REJECTED"}
+                        >
+                          Reject
+                        </Button>
+                        <div className="text-xs leading-5 text-slate-500">
+                          Actions are persisted with audit history.
                         </div>
-                        <div className="mt-1 text-sm text-slate-700">
-                          {rfq.reason}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="flex w-full flex-col gap-2 xl:w-44">
-                      <Button
-                        onClick={() => updateLocalStatus(rfq.id, "Approved")}
-                        disabled={rfq.status === "Approved"}
-                      >
-                        Approve RFQ
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() =>
-                          updateLocalStatus(rfq.id, "Compliance Review")
-                        }
-                        disabled={rfq.status === "Compliance Review"}
-                      >
-                        Request Review
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => updateLocalStatus(rfq.id, "Rejected")}
-                        disabled={rfq.status === "Rejected"}
-                      >
-                        Reject
-                      </Button>
-                      <div className="text-xs leading-5 text-slate-500">
-                        Local review state only. Not persisted.
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           ) : (
             <div className="rounded-lg border border-dashed p-8 text-center">
               <div className="font-semibold text-slate-950">No RFQs found</div>
               <p className="mt-1 text-sm text-slate-600">
-                Run mitigation workflows or clear filters to see recommendations.
+                Clear filters or seed RFQ records to see procurement decisions.
               </p>
             </div>
           )}
@@ -362,4 +418,26 @@ function DataTile({ label, value }: { label: string; value: string }) {
       </div>
     </div>
   );
+}
+
+function statusLabel(status?: string | null) {
+  return normalizeStatus(status).replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function formatRFQPrice(rfq: RFQ) {
+  const price = rfq.price ?? getRfqTargetPrice(rfq);
+
+  if (rfq.currency && rfq.currency !== "USD" && price !== null && price !== undefined) {
+    return `${new Intl.NumberFormat("en-US").format(price)} ${rfq.currency}`;
+  }
+
+  return formatCurrency(price);
+}
+
+function formatLeadTime(rfq: RFQ) {
+  if (rfq.lead_time_days !== null && rfq.lead_time_days !== undefined) {
+    return `${rfq.lead_time_days} days`;
+  }
+
+  return formatDate(rfq.response_deadline);
 }

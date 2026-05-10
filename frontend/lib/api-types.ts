@@ -138,11 +138,18 @@ export const RFQSchema = z
     rfq_id: z.string().optional(),
     mitigation_plan_id: NullableStringSchema,
     mitigation_option_id: NullableStringSchema,
+    workflow_id: NullableStringSchema,
     supplier_id: NullableStringSchema,
     supplier_name: NullableStringSchema,
+    supplier_code: NullableStringSchema,
     supplier_email: NullableStringSchema,
     line_items: z.array(RFQLineItemSchema).optional().default([]),
     target_price: NullableNumberSchema,
+    price: NullableNumberSchema,
+    currency: NullableStringSchema,
+    lead_time_days: z.number().optional().nullable(),
+    risk_summary: NullableStringSchema,
+    notes: NullableStringSchema,
     response_deadline: FlexibleDateSchema,
     delivery_destination: NullableStringSchema,
     terms_ref: NullableStringSchema,
@@ -155,6 +162,44 @@ export const RFQSchema = z
   })
   .passthrough();
 export type RFQ = z.infer<typeof RFQSchema>;
+
+export const RFQListResponseSchema = z.object({
+  success: z.boolean(),
+  count: z.number(),
+  total: z.number(),
+  limit: z.number(),
+  offset: z.number(),
+  rfqs: z.array(RFQSchema),
+});
+export type RFQListResponse = z.infer<typeof RFQListResponseSchema>;
+
+export const RFQDetailResponseSchema = z.object({
+  success: z.boolean(),
+  rfq: RFQSchema,
+});
+export type RFQDetailResponse = z.infer<typeof RFQDetailResponseSchema>;
+
+export const RFQActionHistorySchema = z
+  .object({
+    id: z.string(),
+    rfq_record_id: z.string(),
+    rfq_id: z.string(),
+    action_type: z.string(),
+    previous_status: z.string(),
+    new_status: z.string(),
+    actor: z.string(),
+    note: NullableStringSchema,
+    created_at: FlexibleDateSchema,
+  })
+  .passthrough();
+export type RFQActionHistory = z.infer<typeof RFQActionHistorySchema>;
+
+export const RFQActionsResponseSchema = z.object({
+  success: z.boolean(),
+  count: z.number(),
+  actions: z.array(RFQActionHistorySchema),
+});
+export type RFQActionsResponse = z.infer<typeof RFQActionsResponseSchema>;
 
 export const ExecutionRecordSchema = z
   .object({
@@ -340,6 +385,7 @@ export type RiskDistributionResponse = z.infer<typeof RiskDistributionResponseSc
 export const SupplierRankingSchema = z
   .object({
     supplier_id: z.string(),
+    supplier_name: NullableStringSchema,
     average_risk_score: z.number().optional(),
     avg_risk_score: z.number().optional(),
     assessment_count: z.number().optional(),

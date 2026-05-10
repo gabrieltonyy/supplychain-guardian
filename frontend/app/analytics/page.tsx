@@ -30,6 +30,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { apiClient } from "@/lib/api-client";
+import { getSupplierProfile } from "@/lib/operational-data";
 
 const riskColors: Record<string, string> = {
   LOW: "#10b981",
@@ -86,6 +87,7 @@ export default function AnalyticsPage() {
   const rankings =
     rankingsQuery.data?.rankings.map((ranking) => ({
       supplier_id: ranking.supplier_id,
+      supplier_label: `${ranking.supplier_name ?? getSupplierProfile(ranking.supplier_id).name} (${ranking.supplier_id})`,
       score: ranking.average_risk_score ?? ranking.avg_risk_score ?? 0,
       count: ranking.assessment_count ?? ranking.total_runs ?? 0,
     })) ?? [];
@@ -257,7 +259,7 @@ export default function AnalyticsPage() {
                     >
                       <CartesianGrid strokeDasharray="3 3" horizontal={false} />
                       <XAxis type="number" domain={[0, 100]} />
-                      <YAxis dataKey="supplier_id" type="category" width={110} />
+                      <YAxis dataKey="supplier_label" type="category" width={170} />
                       <Tooltip />
                       <Bar dataKey="score" fill="#334155" radius={[0, 6, 6, 0]} />
                     </BarChart>

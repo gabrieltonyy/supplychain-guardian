@@ -2,6 +2,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models.risk_assessment import RiskAssessmentRecord
+from app.db.models.supplier import Supplier
 from app.db.models.workflow_run import WorkflowRun
 
 
@@ -89,6 +90,7 @@ class WorkflowAnalyticsService:
         result = await self.session.execute(
             select(
                 RiskAssessmentRecord.supplier_id,
+                Supplier.name,
                 func.avg(
                     RiskAssessmentRecord.score
                 ).label("avg_risk_score"),
@@ -96,7 +98,12 @@ class WorkflowAnalyticsService:
                     RiskAssessmentRecord.id
                 ).label("assessment_count"),
             )
+            .join(
+                Supplier,
+                Supplier.id == RiskAssessmentRecord.supplier_id,
+            )
             .group_by(RiskAssessmentRecord.supplier_id)
+            .group_by(Supplier.name)
             .order_by(
                 func.avg(
                     RiskAssessmentRecord.score
@@ -110,8 +117,9 @@ class WorkflowAnalyticsService:
         return [
             {
                 "supplier_id": row[0],
-                "average_risk_score": round(float(row[1]), 2),
-                "assessment_count": row[2],
+                "supplier_name": row[1],
+                "average_risk_score": round(float(row[2]), 2),
+                "assessment_count": row[3],
             }
             for row in rows
         ]

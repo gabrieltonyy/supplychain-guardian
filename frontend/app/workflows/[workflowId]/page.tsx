@@ -208,7 +208,11 @@ export default function WorkflowDetailPage() {
         <>
           <Card className="border-slate-200">
             <CardContent className="grid gap-4 p-6 md:grid-cols-2 xl:grid-cols-5">
-              <SummaryTile label="Supplier" value={supplierId} icon={FileWarning} />
+              <SummaryTile
+                label="Supplier"
+                value={`${profile.name} / ${supplierId}`}
+                icon={FileWarning}
+              />
 
               <SummaryTile
                 label="Estimated Exposure"
@@ -357,7 +361,7 @@ export default function WorkflowDetailPage() {
 
           <WorkflowMetadataCard
             workflowId={workflow?.workflow_id}
-            supplierId={supplierId}
+            supplierId={`${profile.name} / ${supplierId}`}
             status={workflowStatus}
           />
 

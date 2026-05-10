@@ -4,6 +4,9 @@ import type {
   WorkflowDetailResponse,
   TimelineResponse,
   ReplayResponse,
+  RFQActionsResponse,
+  RFQDetailResponse,
+  RFQListResponse,
   AnalyticsSummaryResponse,
   RiskDistributionResponse,
   SupplierRankingsResponse,
@@ -11,6 +14,9 @@ import type {
 import {
   AnalyticsSummaryResponseSchema,
   ReplayResponseSchema,
+  RFQActionsResponseSchema,
+  RFQDetailResponseSchema,
+  RFQListResponseSchema,
   RiskDistributionResponseSchema,
   SupplierRankingsResponseSchema,
   TimelineResponseSchema,
@@ -94,6 +100,68 @@ class ApiClient {
     return this.fetch<ReplayResponse>(
       `/api/v1/db-workflow/${workflowId}/replay`,
       ReplayResponseSchema
+    );
+  }
+
+  // GET /api/v1/rfqs
+  async listRFQs(params?: {
+    search?: string;
+    status?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<RFQListResponse> {
+    const query = new URLSearchParams();
+
+    if (params?.search) query.set("search", params.search);
+    if (params?.status && params.status !== "ALL") {
+      query.set("status", params.status);
+    }
+    query.set("limit", String(params?.limit ?? 100));
+    query.set("offset", String(params?.offset ?? 0));
+
+    return this.fetch<RFQListResponse>(
+      `/api/v1/rfqs?${query.toString()}`,
+      RFQListResponseSchema
+    );
+  }
+
+  async approveRFQ(rfqId: string, note?: string): Promise<RFQDetailResponse> {
+    return this.fetch<RFQDetailResponse>(
+      `/api/v1/rfqs/${encodeURIComponent(rfqId)}/approve`,
+      RFQDetailResponseSchema,
+      {
+        method: "POST",
+        body: JSON.stringify({ note }),
+      }
+    );
+  }
+
+  async requestRFQReview(rfqId: string, note?: string): Promise<RFQDetailResponse> {
+    return this.fetch<RFQDetailResponse>(
+      `/api/v1/rfqs/${encodeURIComponent(rfqId)}/request-review`,
+      RFQDetailResponseSchema,
+      {
+        method: "POST",
+        body: JSON.stringify({ note }),
+      }
+    );
+  }
+
+  async rejectRFQ(rfqId: string, note?: string): Promise<RFQDetailResponse> {
+    return this.fetch<RFQDetailResponse>(
+      `/api/v1/rfqs/${encodeURIComponent(rfqId)}/reject`,
+      RFQDetailResponseSchema,
+      {
+        method: "POST",
+        body: JSON.stringify({ note }),
+      }
+    );
+  }
+
+  async listRFQActions(rfqId: string): Promise<RFQActionsResponse> {
+    return this.fetch<RFQActionsResponse>(
+      `/api/v1/rfqs/${encodeURIComponent(rfqId)}/actions`,
+      RFQActionsResponseSchema
     );
   }
 

@@ -5,9 +5,11 @@ from sqlalchemy import (
     JSON,
     DateTime,
     Enum,
+    Float,
     ForeignKey,
     Integer,
     String,
+    Text,
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -52,6 +54,12 @@ class RFQRecord(Base):
         nullable=False,
     )
 
+    supplier_code: Mapped[str | None] = mapped_column(
+        String(64),
+        nullable=True,
+        index=True,
+    )
+
     supplier_email: Mapped[str] = mapped_column(
         String(255),
         nullable=False,
@@ -86,6 +94,38 @@ class RFQRecord(Base):
         index=True,
     )
 
+    workflow_id: Mapped[str | None] = mapped_column(
+        String(128),
+        nullable=True,
+        index=True,
+    )
+
+    price: Mapped[float | None] = mapped_column(
+        Float,
+        nullable=True,
+    )
+
+    currency: Mapped[str] = mapped_column(
+        String(8),
+        default="USD",
+        nullable=False,
+    )
+
+    lead_time_days: Mapped[int | None] = mapped_column(
+        Integer,
+        nullable=True,
+    )
+
+    risk_summary: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+    )
+
+    notes: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+    )
+
     version: Mapped[int] = mapped_column(
         Integer,
         default=1,
@@ -108,4 +148,71 @@ class RFQRecord(Base):
         DateTime(timezone=True),
         default=lambda: datetime.now(UTC),
         nullable=False,
+    )
+
+    updated_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+        onupdate=lambda: datetime.now(UTC),
+    )
+
+
+class RFQActionHistory(Base):
+    """
+    Immutable RFQ review action history.
+    """
+
+    __tablename__ = "rfq_action_history"
+
+    id: Mapped[str] = mapped_column(
+        String(64),
+        primary_key=True,
+        default=lambda: str(uuid4()),
+    )
+
+    rfq_record_id: Mapped[str] = mapped_column(
+        ForeignKey("rfqs.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    rfq_id: Mapped[str] = mapped_column(
+        String(128),
+        nullable=False,
+        index=True,
+    )
+
+    action_type: Mapped[str] = mapped_column(
+        String(64),
+        nullable=False,
+        index=True,
+    )
+
+    previous_status: Mapped[str] = mapped_column(
+        String(64),
+        nullable=False,
+    )
+
+    new_status: Mapped[str] = mapped_column(
+        String(64),
+        nullable=False,
+        index=True,
+    )
+
+    actor: Mapped[str] = mapped_column(
+        String(120),
+        default="system",
+        nullable=False,
+    )
+
+    note: Mapped[str | None] = mapped_column(
+        Text,
+        nullable=True,
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        default=lambda: datetime.now(UTC),
+        nullable=False,
+        index=True,
     )

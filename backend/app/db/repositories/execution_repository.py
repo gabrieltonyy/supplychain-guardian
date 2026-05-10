@@ -18,6 +18,7 @@ class ExecutionRepository:
         self,
         rfqs: list[RFQDocument],
         mitigation_plan_id: str,
+        workflow_id: str | None = None,
     ) -> list[RFQRecord]:
         records = []
 
@@ -27,11 +28,18 @@ class ExecutionRepository:
                 rfq_id=rfq.rfq_id,
                 supplier_id=rfq.supplier_id,
                 supplier_name=rfq.supplier_name,
+                supplier_code=rfq.supplier_id,
                 supplier_email=rfq.supplier_email,
                 line_items=[
                     item.model_dump(mode="json")
                     for item in rfq.line_items
                 ],
+                workflow_id=workflow_id,
+                price=(
+                    rfq.line_items[0].target_price
+                    if rfq.line_items
+                    else None
+                ),
                 response_deadline=rfq.response_deadline,
                 delivery_destination=rfq.delivery_destination,
                 terms_ref=rfq.terms_ref,

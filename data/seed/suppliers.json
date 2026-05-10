@@ -1,10 +1,10 @@
 [
   {
     "id": "SUP-CN-001",
-    "name": "Shenzhen Precision Components",
+    "name": "Pacific Semiconductor Labs",
     "country": "China",
     "region": "East Asia",
-    "contact_email": "rfq@shenzhenprecision.example",
+    "contact_email": "rfq@pacificsemilabs.example",
     "product_categories": ["electronics", "semiconductors"],
     "certifications": ["ISO9001", "ISO14001"],
     "status": "active",
@@ -77,10 +77,10 @@
   },
   {
     "id": "SUP-US-001",
-    "name": "NorthStar Micro Devices",
+    "name": "Quantum Circuit Manufacturing",
     "country": "United States",
     "region": "North America",
-    "contact_email": "rfq@northstar.example",
+    "contact_email": "rfq@quantumcircuit.example",
     "product_categories": ["semiconductors", "dual_use_electronics"],
     "certifications": ["ISO9001", "ITAR_READY"],
     "status": "active",
@@ -210,10 +210,10 @@
   },
   {
     "id": "SUP-IR-001",
-    "name": "Iran Supply Co",
+    "name": "TerraFuel Energy",
     "country": "Iran",
     "region": "Middle East",
-    "contact_email": "sales@iransupply.example",
+    "contact_email": "sales@terrafuel.example",
     "product_categories": ["industrial_components", "raw_materials"],
     "certifications": [],
     "status": "active",

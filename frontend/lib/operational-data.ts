@@ -19,7 +19,7 @@ export type SupplierProfile = {
 export const supplierProfiles: SupplierProfile[] = [
   {
     id: "SUP-CN-001",
-    name: "China Electronics",
+    name: "Pacific Semiconductor Labs",
     region: "China",
     category: "Semiconductors",
     exposure: "$1.4M",
@@ -36,7 +36,7 @@ export const supplierProfiles: SupplierProfile[] = [
   },
   {
     id: "SUP-DE-001",
-    name: "German Auto Parts",
+    name: "EuroTech Components",
     region: "Germany",
     category: "Automotive Parts",
     exposure: "$620K",
@@ -53,7 +53,7 @@ export const supplierProfiles: SupplierProfile[] = [
   },
   {
     id: "SUP-US-001",
-    name: "US Tech Components",
+    name: "Quantum Circuit Manufacturing",
     region: "United States",
     category: "Tech Components",
     exposure: "$780K",
@@ -70,7 +70,7 @@ export const supplierProfiles: SupplierProfile[] = [
   },
   {
     id: "SUP-IN-001",
-    name: "Indian Semiconductor",
+    name: "Apex India Manufacturing",
     region: "India",
     category: "Semiconductors",
     exposure: "$510K",
@@ -87,7 +87,7 @@ export const supplierProfiles: SupplierProfile[] = [
   },
   {
     id: "SUP-IR-001",
-    name: "Iran Raw Materials",
+    name: "TerraFuel Energy",
     region: "Iran",
     category: "Raw Materials",
     exposure: "$420K",

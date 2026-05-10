@@ -101,6 +101,7 @@ class WorkflowPersistenceService:
         await self.execution_repository.save_rfqs(
             rfqs=execution_record.rfqs,
             mitigation_plan_id=execution_record.mitigation_plan_id,
+            workflow_id=workflow_id,
         )
 
         record = await self.execution_repository.save_execution_record(

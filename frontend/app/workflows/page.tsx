@@ -158,8 +158,13 @@ export default function WorkflowsPage() {
                         </td>
 
                         {/* Supplier */}
-                        <td className="px-3 py-4 font-medium text-slate-950">
-                          {incident.supplierId}
+                        <td className="px-3 py-4">
+                          <div className="font-medium text-slate-950">
+                            {incident.supplierName}
+                          </div>
+                          <div className="mt-1 font-mono text-xs text-slate-400">
+                            {incident.supplierId}
+                          </div>
                         </td>
 
                         {/* Severity */}

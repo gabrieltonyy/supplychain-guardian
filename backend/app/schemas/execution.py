@@ -22,11 +22,16 @@ class RFQStatus(str, Enum):
     RFQ lifecycle states.
     """
 
-    DRAFT = "draft"
-    DISPATCHED = "dispatched"
-    RESPONDED = "responded"
-    EXPIRED = "expired"
-    CANCELLED = "cancelled"
+    DRAFT = "DRAFT"
+    PENDING_APPROVAL = "PENDING_APPROVAL"
+    APPROVED = "APPROVED"
+    REVIEW_REQUESTED = "REVIEW_REQUESTED"
+    REJECTED = "REJECTED"
+    COMPLIANCE_REVIEW = "COMPLIANCE_REVIEW"
+    DISPATCHED = "DISPATCHED"
+    RESPONDED = "RESPONDED"
+    EXPIRED = "EXPIRED"
+    CANCELLED = "CANCELLED"
 
 
 class RFQLineItem(BaseSchema):

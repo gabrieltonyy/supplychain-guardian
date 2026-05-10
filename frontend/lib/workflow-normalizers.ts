@@ -24,6 +24,7 @@ import {
 export type NormalizedWorkflowRun = {
   workflowId: string;
   supplierId: string;
+  supplierName: string;
   status: string;
   statusLabel: string;
   startedAt: string;
@@ -78,6 +79,7 @@ export function normalizeWorkflowRun(run: WorkflowRunItem): NormalizedWorkflowRu
   return {
     workflowId: run.workflow_id,
     supplierId: run.supplier_id,
+    supplierName: profile.name,
     status,
     statusLabel: normalizeStatus(status),
     startedAt: formatDate(run.started_at),
