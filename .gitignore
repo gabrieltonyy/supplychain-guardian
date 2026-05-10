@@ -11,6 +11,14 @@ __pycache__/
 # IDE
 .idea/
 .vscode/
+.agents/
+.codex/
+.playwright-mcp/
+
+# Frontend task tracking
+frontend/task.md
 
 # OS
 .DS_Store
+
+images/
