@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   AlertCircle,
@@ -25,6 +26,12 @@ import {
 } from "@/components/ui/card";
 
 import { apiClient } from "@/lib/api-client";
+import {
+  getSeverityClass,
+  getSupplierProfile,
+} from "@/lib/operational-data";
+import { getWorkflowStatus } from "@/lib/utils";
+import { normalizeWorkflowReplay } from "@/lib/workflow-normalizers";
 
 import {
   ComplianceCard,
@@ -52,80 +59,6 @@ type ReplayData = {
   compliance_reasoning_summary?: string | null;
   compliance_reasoning_source?: string | null;
 };
-
-const supplierProfiles: Record<
-  string,
-  {
-    incident: string;
-    severity: "Critical" | "High" | "Medium" | "Low";
-    impact: string;
-    exposure: string;
-    action: string;
-    operationalImpact: string[];
-  }
-> = {
-  "SUP-CN-001": {
-    incident: "China semiconductor supply disruption",
-    severity: "Critical",
-    impact: "Projected 12-day semiconductor delivery delay",
-    exposure: "$1.4M",
-    action: "Approve alternate sourcing and generate emergency procurement RFQ.",
-    operationalImpact: [
-      "Inventory depletion risk within 5 days",
-      "Manufacturing delays likely for semiconductor-dependent products",
-      "Potential SLA breach for downstream customers",
-    ],
-  },
-  "SUP-DE-001": {
-    incident: "Backup supplier continuity review",
-    severity: "Low",
-    impact: "Supplier stable and available as mitigation fallback",
-    exposure: "$620K",
-    action: "Maintain supplier as preferred alternate sourcing option.",
-    operationalImpact: [
-      "Available for partial sourcing redistribution",
-      "Low operational risk detected",
-      "Strong mitigation candidate",
-    ],
-  },
-  "SUP-IN-001": {
-    incident: "Lead-time anomaly investigation",
-    severity: "Medium",
-    impact: "Supplier lead time increased beyond expected baseline",
-    exposure: "$510K",
-    action: "Request revised fulfillment timeline and compare alternatives.",
-    operationalImpact: [
-      "Possible downstream scheduling delays",
-      "Inventory replenishment timing uncertainty",
-      "Escalation not yet required",
-    ],
-  },
-  "SUP-IR-001": {
-    incident: "Trade compliance hold",
-    severity: "High",
-    impact: "Workflow blocked pending compliance and trade-control review",
-    exposure: "$420K",
-    action: "Escalate to compliance officer before RFQ execution.",
-    operationalImpact: [
-      "Execution blocked by policy controls",
-      "Legal/compliance review required",
-      "Procurement workflow paused",
-    ],
-  },
-};
-
-function getSeverityClass(severity: string) {
-  switch (severity) {
-    case "Critical":
-      return "bg-red-50 text-red-700 border-red-200";
-    case "High":
-      return "bg-orange-50 text-orange-700 border-orange-200";
-    case "Medium":
-      return "bg-amber-50 text-amber-700 border-amber-200";
-    default:
-      return "bg-emerald-50 text-emerald-700 border-emerald-200";
-  }
-}
 
 function AgentStep({
   title,
@@ -167,6 +100,7 @@ function AgentStep({
 export default function WorkflowDetailPage() {
   const params = useParams();
   const workflowId = String(params.workflowId);
+  const [reviewDecision, setReviewDecision] = useState<string | null>(null);
 
   const workflowQuery = useQuery({
     queryKey: ["workflow-detail", workflowId],
@@ -192,19 +126,18 @@ export default function WorkflowDetailPage() {
   const timeline = timelineQuery.data;
   const replayResponse = replayQuery.data;
   const replayData = replayResponse?.replay as ReplayData | undefined;
+  const normalizedReplay = replayResponse
+    ? normalizeWorkflowReplay(replayResponse.replay, workflowId)
+    : null;
 
   const supplierId =
-    workflow?.supplier_id || replayData?.supplier_id || "UNKNOWN-SUPPLIER";
+    workflow?.supplier_id ||
+    replayData?.supplier_id ||
+    normalizedReplay?.supplierId ||
+    "UNKNOWN-SUPPLIER";
 
-  const profile =
-    supplierProfiles[supplierId] ?? {
-      incident: "Operational supplier investigation",
-      severity: "Medium" as const,
-      impact: "Operational impact pending review",
-      exposure: "TBD",
-      action: "Review workflow recommendations and mitigation plan.",
-      operationalImpact: ["Operational context not available"],
-    };
+  const profile = getSupplierProfile(supplierId);
+  const workflowStatus = workflow ? getWorkflowStatus(workflow) : "Unknown";
 
   return (
     <div className="space-y-6">
@@ -238,7 +171,12 @@ export default function WorkflowDetailPage() {
           </p>
         </div>
 
-        <Button variant="outline">Export Incident Report</Button>
+        <Button
+          variant="outline"
+          onClick={() => setReviewDecision("Incident report marked for export review")}
+        >
+          Mark Export Review
+        </Button>
       </div>
 
       {isLoading ? (
@@ -286,13 +224,13 @@ export default function WorkflowDetailPage() {
 
               <SummaryTile
                 label="Workflow Status"
-                value={workflow?.status ?? "Unknown"}
+                value={workflowStatus}
                 icon={CheckCircle2}
               />
 
               <SummaryTile
                 label="Recommended Action"
-                value={profile.action}
+                value={profile.recommendedAction}
                 icon={Sparkles}
               />
             </CardContent>
@@ -364,16 +302,45 @@ export default function WorkflowDetailPage() {
                   </div>
 
                   <div className="mt-1 text-sm text-emerald-800">
-                    {profile.action}
+                    {profile.recommendedAction}
                   </div>
 
                   <div className="mt-4 flex flex-wrap gap-2">
-                    <Button>Approve Recommendation</Button>
+                    <Button
+                      onClick={() =>
+                        setReviewDecision("Recommendation approved locally")
+                      }
+                    >
+                      Approve Recommendation
+                    </Button>
 
-                    <Button variant="outline">Request Human Review</Button>
+                    <Button
+                      variant="outline"
+                      onClick={() =>
+                        setReviewDecision("Human review requested locally")
+                      }
+                    >
+                      Request Human Review
+                    </Button>
 
-                    <Button variant="outline">Escalate</Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => setReviewDecision("Escalated locally")}
+                    >
+                      Escalate
+                    </Button>
                   </div>
+
+                  <p className="mt-3 text-xs text-emerald-800">
+                    Review-only controls. Decisions are visible in this browser
+                    session and are not persisted to the backend.
+                  </p>
+
+                  {reviewDecision ? (
+                    <div className="mt-3 rounded-md border border-emerald-200 bg-white px-3 py-2 text-sm font-medium text-emerald-900">
+                      {reviewDecision}
+                    </div>
+                  ) : null}
                 </div>
               </div>
             </CardContent>
@@ -391,7 +358,7 @@ export default function WorkflowDetailPage() {
           <WorkflowMetadataCard
             workflowId={workflow?.workflow_id}
             supplierId={supplierId}
-            status={workflow?.status}
+            status={workflowStatus}
           />
 
           <RiskAssessmentCard
@@ -420,6 +387,27 @@ export default function WorkflowDetailPage() {
           />
 
           <TimelineCard timeline={timeline?.timeline ?? []} />
+
+          {replayResponse?.replay ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>Technical Audit Data</CardTitle>
+                <CardDescription>
+                  Raw replay data is available for developers and auditors.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <details className="rounded-lg border bg-slate-50 p-4">
+                  <summary className="cursor-pointer text-sm font-semibold text-slate-950">
+                    Show raw workflow replay snapshot
+                  </summary>
+                  <pre className="mt-4 max-h-96 overflow-auto rounded-lg bg-slate-950 p-4 text-xs text-slate-100">
+                    {JSON.stringify(replayResponse.replay, null, 2)}
+                  </pre>
+                </details>
+              </CardContent>
+            </Card>
+          ) : null}
         </>
       )}
     </div>

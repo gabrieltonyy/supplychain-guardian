@@ -8,6 +8,9 @@ import { cn } from "@/lib/utils";
 export const metadata: Metadata = {
   title: "SupplyChain Guardian",
   description: "AI-powered supply chain risk management platform",
+  icons: {
+    icon: "/icon.svg",
+  },
 };
 
 export default function RootLayout({

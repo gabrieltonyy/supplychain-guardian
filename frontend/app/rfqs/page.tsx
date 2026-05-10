@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import type { ComponentType } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   AlertCircle,
@@ -14,6 +15,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -21,93 +23,48 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { apiClient } from "@/lib/api-client";
+import type { ReplayResponse } from "@/lib/api-types";
+import {
+  normalizeWorkflowReplay,
+  type NormalizedRFQ,
+} from "@/lib/workflow-normalizers";
 
-type RFQStatus =
-  | "Pending Approval"
-  | "Draft"
-  | "Approved"
-  | "Compliance Review";
+type RFQStatus = NormalizedRFQ["status"];
+type StatusFilter = RFQStatus | "All";
 
-type RFQRecord = {
-  supplier: string;
-  alternateSupplier: string;
-  price: string;
-  leadTime: string;
-  risk: string;
-  status: RFQStatus;
-  reason: string;
-};
-
-const mockStatuses: RFQStatus[] = [
+const statusOptions: StatusFilter[] = [
+  "All",
   "Pending Approval",
-  "Draft",
   "Approved",
   "Compliance Review",
+  "Draft",
+  "Rejected",
 ];
 
-function deriveRFQsFromReplay(data: unknown): RFQRecord[] {
-  if (!data || typeof data !== "object") {
-    return [];
+function isReplayResponse(value: ReplayResponse | null): value is ReplayResponse {
+  return Boolean(value);
+}
+
+function getStatusClass(status: RFQStatus) {
+  switch (status) {
+    case "Pending Approval":
+      return "bg-orange-50 text-orange-700";
+    case "Approved":
+      return "bg-emerald-50 text-emerald-700";
+    case "Compliance Review":
+      return "bg-red-50 text-red-700";
+    case "Rejected":
+      return "bg-slate-200 text-slate-700";
+    default:
+      return "bg-slate-100 text-slate-700";
   }
-
-  const replay = data as Record<string, unknown>;
-  const supplierId =
-    typeof replay.supplier_id === "string"
-      ? replay.supplier_id
-      : "UNKNOWN-SUPPLIER";
-
-  const mitigation =
-    replay.mitigation_plan && typeof replay.mitigation_plan === "object"
-      ? (replay.mitigation_plan as Record<string, unknown>)
-      : null;
-
-  const options = Array.isArray(mitigation?.recommended_options)
-    ? mitigation?.recommended_options
-    : [];
-
-  if (!options.length) {
-    return [];
-  }
-
-  return options.map((option, index) => {
-    const item =
-      option && typeof option === "object"
-        ? (option as Record<string, unknown>)
-        : {};
-
-    return {
-      supplier: supplierId,
-      alternateSupplier:
-        typeof item.supplier_id === "string"
-          ? item.supplier_id
-          : `ALT-SUP-${index + 1}`,
-      price:
-        typeof item.estimated_cost === "string"
-          ? item.estimated_cost
-          : `$${(index + 1) * 12000}`,
-      leadTime:
-        typeof item.lead_time === "string"
-          ? item.lead_time
-          : `${4 + index} days`,
-      risk:
-        typeof item.risk_level === "string"
-          ? item.risk_level
-          : "LOW",
-      status:
-        mockStatuses[index % mockStatuses.length] ?? "Pending Approval",
-      reason:
-        typeof item.reason === "string"
-          ? item.reason
-          : "AI-generated mitigation recommendation.",
-    };
-  });
 }
 
 export default function RFQsPage() {
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<RFQStatus | "All">("All");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("All");
+  const [localStatuses, setLocalStatuses] = useState<Record<string, RFQStatus>>({});
 
   const workflowsQuery = useQuery({
     queryKey: ["workflow-runs-rfqs"],
@@ -124,22 +81,29 @@ export default function RFQsPage() {
         })
       );
 
-      return replayResults.filter(Boolean);
+      return replayResults.filter(isReplayResponse);
     },
   });
 
   const rfqs = useMemo(() => {
-    return workflowsQuery.data?.flatMap((replay) =>
-      deriveRFQsFromReplay(replay)
-    ) ?? [];
-  }, [workflowsQuery.data]);
+    const normalized =
+      workflowsQuery.data?.flatMap((replay) =>
+        normalizeWorkflowReplay(replay.replay, replay.workflow_id).rfqs
+      ) ?? [];
+
+    return normalized.map((rfq) => ({
+      ...rfq,
+      status: localStatuses[rfq.id] ?? rfq.status,
+    }));
+  }, [localStatuses, workflowsQuery.data]);
 
   const filtered = rfqs.filter((rfq) => {
+    const query = search.toLowerCase();
     const matchesSearch =
-      rfq.supplier.toLowerCase().includes(search.toLowerCase()) ||
-      rfq.alternateSupplier
-        .toLowerCase()
-        .includes(search.toLowerCase());
+      rfq.supplierId.toLowerCase().includes(query) ||
+      rfq.supplierName.toLowerCase().includes(query) ||
+      rfq.originalSupplierId?.toLowerCase().includes(query) ||
+      rfq.id.toLowerCase().includes(query);
 
     const matchesStatus =
       statusFilter === "All" || rfq.status === statusFilter;
@@ -147,26 +111,35 @@ export default function RFQsPage() {
     return matchesSearch && matchesStatus;
   });
 
+  const counts = {
+    pending: rfqs.filter((rfq) => rfq.status === "Pending Approval").length,
+    approved: rfqs.filter((rfq) => rfq.status === "Approved").length,
+    compliance: rfqs.filter((rfq) => rfq.status === "Compliance Review").length,
+    total: rfqs.length,
+  };
+
+  function updateLocalStatus(id: string, status: RFQStatus) {
+    setLocalStatuses((current) => ({ ...current, [id]: status }));
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-slate-950">
-            RFQ Command Center
+            RFQ Decision Center
           </h1>
           <p className="mt-2 max-w-3xl text-slate-600">
-            Review AI-generated sourcing recommendations, compare alternate
-            suppliers, and manage approval decisions before execution.
+            Compare alternate suppliers, review approval blockers, and decide
+            which sourcing action should move forward.
           </p>
         </div>
 
         <div className="rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm">
-          <div className="font-semibold text-blue-900">
-            Procurement Operations
-          </div>
+          <div className="font-semibold text-blue-900">Review-only actions</div>
           <div className="mt-1 text-blue-700">
-            RFQs are currently derived from workflow replay data until a
-            dedicated backend RFQ endpoint is implemented.
+            Approval controls update this browser session only. Backend
+            persistence is not connected yet.
           </div>
         </div>
       </div>
@@ -174,35 +147,35 @@ export default function RFQsPage() {
       <div className="grid gap-4 md:grid-cols-4">
         <OverviewCard
           title="Pending Approval"
-          value="5"
-          detail="Waiting for procurement review"
+          value={counts.pending}
+          detail="Need procurement decision"
           icon={Clock3}
         />
         <OverviewCard
           title="Approved"
-          value="8"
-          detail="Ready for supplier engagement"
+          value={counts.approved}
+          detail="Marked ready in review"
           icon={CheckCircle2}
         />
         <OverviewCard
           title="Compliance Review"
-          value="2"
-          detail="Need regulatory clearance"
+          value={counts.compliance}
+          detail="Need policy clearance"
           icon={ShieldCheck}
         />
         <OverviewCard
           title="Total RFQs"
-          value={rfqs.length}
-          detail="Generated from mitigation workflows"
+          value={counts.total}
+          detail="From recent workflows"
           icon={RadioTower}
         />
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Filter RFQs</CardTitle>
+          <CardTitle>Find RFQs</CardTitle>
           <CardDescription>
-            Search by supplier or narrow by operational status.
+            Search by supplier, RFQ ID, or original supplier and filter by review status.
           </CardDescription>
         </CardHeader>
 
@@ -212,7 +185,7 @@ export default function RFQsPage() {
             <input
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              placeholder="Search supplier or alternate supplier"
+              placeholder="Search supplier, RFQ, or workflow context"
               className="h-11 w-full rounded-lg border border-slate-200 bg-white pl-10 pr-4 text-sm outline-none transition focus:border-slate-400"
             />
           </div>
@@ -221,15 +194,12 @@ export default function RFQsPage() {
             <Filter className="absolute left-3 top-3.5 h-4 w-4 text-slate-400" />
             <select
               value={statusFilter}
-              onChange={(event) =>
-                setStatusFilter(event.target.value as RFQStatus | "All")
-              }
+              onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}
               className="h-11 w-full rounded-lg border border-slate-200 bg-white pl-10 pr-4 text-sm outline-none transition focus:border-slate-400"
             >
-              <option value="All">All statuses</option>
-              {mockStatuses.map((status) => (
+              {statusOptions.map((status) => (
                 <option key={status} value={status}>
-                  {status}
+                  {status === "All" ? "All statuses" : status}
                 </option>
               ))}
             </select>
@@ -241,20 +211,19 @@ export default function RFQsPage() {
         <CardHeader>
           <CardTitle>Supplier RFQ Recommendations</CardTitle>
           <CardDescription>
-            Compare alternate suppliers, pricing, lead time, and operational
-            risk before approving sourcing decisions.
+            Compare price, lead time, risk, and AI rationale before acting.
           </CardDescription>
         </CardHeader>
 
         <CardContent>
           {workflowsQuery.isLoading ? (
-            <div className="flex items-center gap-2 py-8 text-sm text-muted-foreground">
+            <div className="flex items-center gap-2 py-8 text-sm text-slate-600">
               <Loader2 className="h-4 w-4 animate-spin" />
               Loading RFQ recommendations
             </div>
           ) : workflowsQuery.isError ? (
             <div className="flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4">
-              <AlertCircle className="mt-0.5 h-5 w-5 text-red-700" />
+              <AlertCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-700" />
               <div>
                 <div className="font-semibold text-red-950">
                   Failed to load RFQs
@@ -268,57 +237,40 @@ export default function RFQsPage() {
             </div>
           ) : filtered.length ? (
             <div className="space-y-4">
-              {filtered.map((rfq, index) => (
-                <div
-                  key={`${rfq.supplier}-${rfq.alternateSupplier}-${index}`}
-                  className="rounded-xl border bg-white p-5"
-                >
+              {filtered.map((rfq) => (
+                <div key={rfq.id} className="rounded-lg border bg-white p-5">
                   <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-                    <div>
+                    <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <div className="font-semibold text-slate-950">
-                          {rfq.supplier}
+                        <div className="break-all font-semibold text-slate-950">
+                          {rfq.originalSupplierId ?? "Original supplier"}
                         </div>
-
                         <ArrowRight className="h-4 w-4 text-slate-400" />
-
-                        <div className="font-semibold text-slate-950">
-                          {rfq.alternateSupplier}
+                        <div className="break-all font-semibold text-slate-950">
+                          {rfq.supplierName}
                         </div>
-
                         <span
-                          className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
-                            rfq.status === "Pending Approval"
-                              ? "bg-orange-50 text-orange-700"
-                              : rfq.status === "Approved"
-                                ? "bg-emerald-50 text-emerald-700"
-                                : rfq.status === "Compliance Review"
-                                  ? "bg-red-50 text-red-700"
-                                  : "bg-slate-100 text-slate-700"
-                          }`}
+                          className={`rounded-full px-2 py-0.5 text-xs font-semibold ${getStatusClass(
+                            rfq.status
+                          )}`}
                         >
                           {rfq.status}
                         </span>
                       </div>
 
+                      <div className="mt-1 break-all font-mono text-xs text-slate-400">
+                        RFQ {rfq.id}
+                      </div>
+
                       <div className="mt-3 grid gap-3 md:grid-cols-3">
-                        <DataTile
-                          label="Estimated Price"
-                          value={rfq.price}
-                        />
-                        <DataTile
-                          label="Lead Time"
-                          value={rfq.leadTime}
-                        />
-                        <DataTile
-                          label="Risk"
-                          value={rfq.risk}
-                        />
+                        <DataTile label="Price" value={rfq.price} />
+                        <DataTile label="Lead Time" value={rfq.leadTime} />
+                        <DataTile label="Risk" value={rfq.risk} />
                       </div>
 
                       <div className="mt-4 rounded-lg bg-slate-50 p-3">
                         <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                          AI Recommendation
+                          Why this matters
                         </div>
                         <div className="mt-1 text-sm text-slate-700">
                           {rfq.reason}
@@ -326,18 +278,32 @@ export default function RFQsPage() {
                       </div>
                     </div>
 
-                    <div className="flex flex-col gap-2">
-                      <Button>
+                    <div className="flex w-full flex-col gap-2 xl:w-44">
+                      <Button
+                        onClick={() => updateLocalStatus(rfq.id, "Approved")}
+                        disabled={rfq.status === "Approved"}
+                      >
                         Approve RFQ
                       </Button>
-
-                      <Button variant="outline">
+                      <Button
+                        variant="outline"
+                        onClick={() =>
+                          updateLocalStatus(rfq.id, "Compliance Review")
+                        }
+                        disabled={rfq.status === "Compliance Review"}
+                      >
                         Request Review
                       </Button>
-
-                      <Button variant="outline">
+                      <Button
+                        variant="outline"
+                        onClick={() => updateLocalStatus(rfq.id, "Rejected")}
+                        disabled={rfq.status === "Rejected"}
+                      >
                         Reject
                       </Button>
+                      <div className="text-xs leading-5 text-slate-500">
+                        Local review state only. Not persisted.
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -345,11 +311,9 @@ export default function RFQsPage() {
             </div>
           ) : (
             <div className="rounded-lg border border-dashed p-8 text-center">
-              <div className="font-semibold text-slate-950">
-                No RFQs found
-              </div>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Run mitigation workflows to generate supplier recommendations.
+              <div className="font-semibold text-slate-950">No RFQs found</div>
+              <p className="mt-1 text-sm text-slate-600">
+                Run mitigation workflows or clear filters to see recommendations.
               </p>
             </div>
           )}
@@ -368,21 +332,15 @@ function OverviewCard({
   title: string;
   value: string | number;
   detail: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: ComponentType<{ className?: string }>;
 }) {
   return (
     <Card>
       <CardContent className="flex items-start justify-between gap-3 p-5">
         <div>
-          <div className="text-sm font-medium text-slate-500">
-            {title}
-          </div>
-          <div className="mt-2 text-3xl font-bold text-slate-950">
-            {value}
-          </div>
-          <div className="mt-1 text-xs text-slate-500">
-            {detail}
-          </div>
+          <div className="text-sm font-medium text-slate-500">{title}</div>
+          <div className="mt-2 text-3xl font-bold text-slate-950">{value}</div>
+          <div className="mt-1 text-xs text-slate-500">{detail}</div>
         </div>
 
         <div className="rounded-lg border border-slate-200 bg-slate-50 p-2 text-slate-600">
@@ -393,19 +351,13 @@ function OverviewCard({
   );
 }
 
-function DataTile({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
+function DataTile({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border bg-white p-3">
+    <div className="min-w-0 rounded-lg border bg-white p-3">
       <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
         {label}
       </div>
-      <div className="mt-1 font-semibold text-slate-950">
+      <div className="mt-1 break-words font-semibold text-slate-950">
         {value}
       </div>
     </div>

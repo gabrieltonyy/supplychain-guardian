@@ -4,6 +4,7 @@ import {
   Clock,
   FileText,
   ShieldCheck,
+  Sparkles,
   TrendingDown,
   TrendingUp,
 } from "lucide-react";
@@ -392,6 +393,18 @@ export function ExecutionRecordCard({
           </div>
         ) : null}
 
+        <ActionCallout
+          tone="blue"
+          title="What procurement should do"
+          detail={
+            countPendingApprovals(execution) > 0
+              ? "Review pending RFQs before supplier dispatch. Approval actions are intentionally human-controlled."
+              : resolvedRfqs.length
+                ? "Confirm generated RFQs match the mitigation plan before supplier engagement."
+                : "No RFQ action is required for this workflow."
+          }
+        />
+
         <RFQList rfqs={resolvedRfqs} />
       </CardContent>
     </Card>
@@ -465,6 +478,16 @@ export function ComplianceCard({
           </div>
         ) : null}
 
+        <ActionCallout
+          tone={isBlocked ? "orange" : "green"}
+          title="What compliance should do"
+          detail={
+            isBlocked
+              ? "Keep execution on hold until the compliance officer reviews the evidence and records a decision."
+              : "Compliance does not currently block the workflow. Keep the audit record for traceability."
+          }
+        />
+
         {audit?.regulatory_results.length ? (
           <div className="grid gap-2">
             {audit.regulatory_results.map((item, index) => (
@@ -527,7 +550,15 @@ export function TimelineCard({ timeline }: { timeline: TimelineEvent[] }) {
             ))}
           </ol>
         ) : (
-          <p className="text-sm text-muted-foreground">No timeline events returned.</p>
+          <div className="rounded-lg border border-dashed p-6 text-center">
+            <div className="font-semibold text-slate-950">
+              No timeline events returned
+            </div>
+            <p className="mt-1 text-sm text-muted-foreground">
+              The incident can still be reviewed from risk, mitigation, RFQ, and
+              compliance sections.
+            </p>
+          </div>
         )}
       </CardContent>
     </Card>
@@ -550,9 +581,14 @@ export function FinalStateSnapshotCard({ snapshot }: { snapshot: unknown }) {
       </CardHeader>
 
       <CardContent>
-        <pre className="max-h-96 overflow-auto rounded-lg bg-slate-950 p-4 text-xs text-slate-100">
-          {JSON.stringify(snapshot, null, 2)}
-        </pre>
+        <details className="rounded-lg border bg-slate-50 p-4">
+          <summary className="cursor-pointer text-sm font-semibold text-slate-950">
+            Show raw final state snapshot
+          </summary>
+          <pre className="mt-4 max-h-96 overflow-auto rounded-lg bg-slate-950 p-4 text-xs text-slate-100">
+            {JSON.stringify(snapshot, null, 2)}
+          </pre>
+        </details>
       </CardContent>
     </Card>
   );
@@ -627,6 +663,34 @@ function SummaryTile({ label, value }: { label: string; value: string }) {
     <div className="rounded-lg border bg-slate-50 p-4">
       <div className="text-2xl font-bold capitalize">{value}</div>
       <div className="text-sm text-muted-foreground">{label}</div>
+    </div>
+  );
+}
+
+function ActionCallout({
+  title,
+  detail,
+  tone,
+}: {
+  title: string;
+  detail: string;
+  tone: "blue" | "green" | "orange";
+}) {
+  const classes = {
+    blue: "border-blue-200 bg-blue-50 text-blue-900",
+    green: "border-emerald-200 bg-emerald-50 text-emerald-900",
+    orange: "border-orange-200 bg-orange-50 text-orange-900",
+  };
+
+  return (
+    <div className={`rounded-lg border p-4 ${classes[tone]}`}>
+      <div className="flex items-start gap-3">
+        <Sparkles className="mt-0.5 h-5 w-5 shrink-0" />
+        <div>
+          <div className="font-semibold">{title}</div>
+          <p className="mt-1 text-sm">{detail}</p>
+        </div>
+      </div>
     </div>
   );
 }

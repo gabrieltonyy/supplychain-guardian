@@ -40,13 +40,13 @@ const riskColors: Record<string, string> = {
 
 const riskInsights = [
   {
-    label: "China logistics risk",
-    trend: "Up 28%",
-    detail: "Port and component delay signals are increasing.",
+    label: "Semiconductor sourcing",
+    trend: "Risk up",
+    detail: "China supplier disruption is the highest exposure item.",
   },
   {
     label: "Compliance exposure",
-    trend: "Up 14%",
+    trend: "Needs review",
     detail: "Trade-control review required for restricted supplier workflows.",
   },
   {
@@ -239,7 +239,7 @@ export default function AnalyticsPage() {
             </Card>
           </div>
 
-          <div className="grid gap-6 xl:grid-cols-2">
+          <div className="grid gap-6 xl:grid-cols-3">
             <Card>
               <CardHeader>
                 <CardTitle>Supplier Risk Ranking</CardTitle>
@@ -265,6 +265,29 @@ export default function AnalyticsPage() {
                 ) : (
                   <EmptyChartState message="No supplier ranking data available yet." />
                 )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Mitigation Effectiveness</CardTitle>
+                <CardDescription>
+                  Management view of whether mitigations are reducing exposure.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Recommendation
+                  title="Current signal"
+                  detail="Generated mitigation plans and RFQs are visible, but shipment outcomes are not connected yet."
+                />
+                <Recommendation
+                  title="Business value"
+                  detail="Once fulfillment outcomes are connected, this view will show avoided delays and exposure reduction."
+                />
+                <Recommendation
+                  title="Next data need"
+                  detail="Connect order, shipment, and supplier response outcomes to prove mitigation impact."
+                />
               </CardContent>
             </Card>
 
