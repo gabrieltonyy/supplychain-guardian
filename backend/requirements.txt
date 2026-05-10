@@ -23,7 +23,7 @@ langchain-community==0.3.13
 ollama==0.4.4
 openai==1.58.1
 
-numpy==2.2.1
+numpy==1.26.4
 apscheduler==3.11.0
 
 sendgrid==6.11.0
