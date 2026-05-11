@@ -1,140 +1,314 @@
 # SupplyChain Guardian
 
-AI-powered autonomous supply chain risk management platform built for the AMD AI Hackathon.
+<div align="center">
 
-SupplyChain Guardian is a multi-agent system designed to help enterprises detect, analyze, and respond to supply chain disruptions in real time. The platform combines deterministic risk analytics, vector search, workflow automation, and AI-assisted reasoning to reduce operational disruption, procurement delays, and supplier risk exposure.
+# AI-Powered Autonomous Supply Chain Risk Intelligence Platform
 
-The system continuously monitors supplier ecosystems using external intelligence feeds such as weather, geopolitical activity, financial indicators, logistics disruptions, and tariff changes. When elevated risk is detected, the platform autonomously evaluates mitigation strategies, simulates supplier-switch scenarios, and initiates procurement workflows through RFQ generation and approval routing.
+### Built for the AMD AI Hackathon
 
----
+Detect. Predict. Mitigate. Automate.
 
-# Core AI Agents
-
-## 1. Risk Analyst Agent
-
-* Ingests real-time external risk signals
-* Computes weighted supplier risk scores
-* Detects anomalies using historical baselines
-* Produces explainable risk summaries
-
-## 2. Mitigation Strategist Agent
-
-* Discovers alternative suppliers
-* Uses vector similarity search for supplier matching
-* Simulates switching scenarios
-* Ranks mitigation strategies using TOPSIS multi-criteria analysis
-
-## 3. Execution Agent
-
-* Generates RFQs automatically
-* Routes procurement approvals
-* Dispatches supplier communications
-* Tracks supplier responses and execution workflows
-
-## 4. Compliance Agent *(in progress)*
-
-* Regulatory validation
-* Audit trail generation
-* Trade restriction checks
-* Governance and policy enforcement
+</div>
 
 ---
 
-# Key Features
+## Overview
 
-* Real-time supplier risk scoring
-* Multi-agent orchestration with LangGraph
-* AI-assisted procurement workflows
-* Deterministic scoring and simulation engines
-* Explainable AI reasoning
-* Vector-based supplier discovery using Qdrant
-* PostgreSQL + Redis + Qdrant architecture
-* FastAPI backend
-* React/TypeScript frontend
-* Async event-driven processing
-* Human-in-the-loop approval workflows
+SupplyChain Guardian is an AI-powered multi-agent platform designed to autonomously detect, analyze, and mitigate supply chain disruptions in real time.
+
+Modern supply chains are increasingly vulnerable to:
+
+- geopolitical instability,
+- logistics bottlenecks,
+- supplier insolvency,
+- tariff fluctuations,
+- climate disruptions,
+- and operational delays.
+
+Traditional ERP and procurement systems are reactive.
+
+SupplyChain Guardian introduces a proactive AI-driven operational intelligence layer capable of:
+
+- continuously monitoring supplier ecosystems,
+- identifying emerging disruptions,
+- simulating mitigation strategies,
+- autonomously generating procurement workflows,
+- and orchestrating enterprise decision support.
+
+The platform combines:
+
+- Multi-Agent AI orchestration
+- Real-time external intelligence feeds
+- Explainable risk scoring
+- Autonomous RFQ workflows
+- Supplier vector similarity search
+- Human-in-the-loop approvals
+- Deterministic simulation engines
 
 ---
 
-# Technology Stack
+# Why This Matters
+
+Global supply chain disruptions cost enterprises **trillions annually** through:
+
+- delayed shipments,
+- production downtime,
+- inventory shortages,
+- supplier failures,
+- and procurement inefficiencies.
+
+Most organizations still rely on fragmented monitoring systems and manual response workflows.
+
+SupplyChain Guardian transforms supply chain operations from:
+
+Reactive → Predictive → Autonomous.
+
+---
+
+# Key Capabilities
+
+## Real-Time Risk Intelligence
+
+Continuously analyzes:
+
+- supplier financial health,
+- geopolitical developments,
+- weather disruptions,
+- shipping anomalies,
+- tariff changes,
+- logistics instability,
+- and operational anomalies.
+
+---
+
+## Multi-Agent AI Orchestration
+
+The platform uses collaborative AI agents powered by LangGraph workflows.
+
+### Risk Analyst Agent
+
+Responsible for:
+
+- supplier risk scoring,
+- anomaly detection,
+- external intelligence analysis,
+- and explainable risk reasoning.
+
+### Mitigation Strategist Agent
+
+Responsible for:
+
+- discovering alternative suppliers,
+- evaluating switching scenarios,
+- cost/time tradeoff analysis,
+- and mitigation planning.
+
+### Execution Agent
+
+Responsible for:
+
+- autonomous RFQ generation,
+- workflow routing,
+- approval orchestration,
+- and supplier execution coordination.
+
+### Compliance Agent *(In Progress)*
+
+Responsible for:
+
+- regulatory validation,
+- trade compliance,
+- governance enforcement,
+- and audit reporting.
+
+---
+
+# Core Features
+
+- AI-powered autonomous procurement workflows
+- Real-time supplier risk scoring
+- Explainable AI decision reasoning
+- LangGraph multi-agent orchestration
+- Human-in-the-loop approvals
+- Vector-based supplier discovery
+- RFQ lifecycle automation
+- Deterministic mitigation simulations
+- Async event-driven processing
+- Audit and workflow history tracking
+- PostgreSQL + Redis + Qdrant architecture
+- Scalable API-first backend
+
+---
+
+# Architecture
+
+```text
+                    ┌─────────────────────────┐
+                    │ External Intelligence   │
+                    │-------------------------│
+                    │ Weather APIs            │
+                    │ Financial APIs          │
+                    │ Logistics Feeds         │
+                    │ Tariff / Geo Events     │
+                    └────────────┬────────────┘
+                                 │
+                                 ▼
+                    ┌─────────────────────────┐
+                    │ Risk Analyst Agent      │
+                    │-------------------------│
+                    │ Risk Scoring            │
+                    │ Anomaly Detection       │
+                    │ Signal Correlation      │
+                    └────────────┬────────────┘
+                                 │
+                                 ▼
+                    ┌─────────────────────────┐
+                    │ Mitigation Strategist   │
+                    │-------------------------│
+                    │ Supplier Discovery      │
+                    │ Scenario Simulation     │
+                    │ TOPSIS Optimization     │
+                    └────────────┬────────────┘
+                                 │
+                                 ▼
+                    ┌─────────────────────────┐
+                    │ Execution Agent         │
+                    │-------------------------│
+                    │ RFQ Automation          │
+                    │ Approval Workflows      │
+                    │ Supplier Coordination   │
+                    └────────────┬────────────┘
+                                 │
+                                 ▼
+                    ┌─────────────────────────┐
+                    │ Compliance Agent        │
+                    │-------------------------│
+                    │ Governance Checks       │
+                    │ Audit Trails            │
+                    │ Trade Validation        │
+                    └────────────┬────────────┘
+                                 │
+                                 ▼
+                    ┌─────────────────────────┐
+                    │ Dashboard & Analytics   │
+                    └─────────────────────────┘
+```
+
+---
+
+# Tech Stack
+
+## Frontend
+
+- Next.js
+- TypeScript
+- TailwindCSS
+- React Query
+- Modern Dashboard UI
 
 ## Backend
 
-* FastAPI
-* LangGraph
-* SQLAlchemy
-* PostgreSQL
-* Redis
-* Qdrant
+- FastAPI
+- Python
+- SQLAlchemy
+- AsyncIO
+- APScheduler
 
-## AI / ML
+## AI & Intelligence Layer
 
-* Ollama + Mistral
-* LangChain
-* Vector embeddings
-* Multi-agent orchestration
+- LangGraph
+- LangChain
+- Ollama
+- Mistral
+- Vector Embeddings
+- Deterministic Risk Engines
 
-## Infrastructure
+## Data & Infrastructure
 
-* Docker
-* Kubernetes
-* AsyncIO
-* APScheduler
-
----
-
-# AMD Hackathon Focus
-
-This project explores how AI agents and accelerated AI infrastructure can improve operational resilience in global supply chains. The system is designed to demonstrate:
-
-* autonomous enterprise workflows,
-* real-time risk intelligence,
-* AI-assisted decision support,
-* and scalable multi-agent orchestration.
+- PostgreSQL
+- Redis
+- Qdrant
+- Docker
+- Kubernetes
 
 ---
 
-# Architecture Overview
+# AI Workflow Pipeline
 
 ```text
-External Risk Feeds
-    ↓
-Risk Analyst Agent
-    ↓
-Mitigation Strategist Agent
-    ↓
-Execution Agent
-    ↓
-Compliance Agent
-    ↓
-Dashboard + Reports + Alerts
+External Signals
+      ↓
+Risk Analysis
+      ↓
+Anomaly Detection
+      ↓
+Mitigation Planning
+      ↓
+Supplier Matching
+      ↓
+RFQ Generation
+      ↓
+Approval Workflow
+      ↓
+Execution & Monitoring
 ```
+
+---
+
+# Example Workflow
+
+## Scenario
+
+A supplier in Southeast Asia experiences:
+
+- severe weather disruption,
+- shipment delays,
+- and deteriorating financial indicators.
+
+## SupplyChain Guardian Response
+
+1. Risk Analyst Agent detects abnormal supplier risk patterns
+2. Mitigation Strategist identifies alternative suppliers
+3. Cost/time simulations are executed
+4. Execution Agent generates RFQs automatically
+5. Procurement approval workflow is initiated
+6. Compliance validation is performed
+7. Decision audit trail is stored
+
+All within minutes.
 
 ---
 
 # Project Structure
 
 ```text
-backend/     → FastAPI backend and AI agents
-frontend/    → React frontend dashboard
-infra/       → Docker, Kubernetes, Terraform
-data/        → Mock feeds and seed data
-docs/        → PRD, architecture, and system docs
+backend/
+├── app/
+├── agents/
+├── workflows/
+├── services/
+├── models/
+├── api/
+└── tests/
+
+frontend/
+├── app/
+├── components/
+├── hooks/
+├── services/
+└── types/
+
+infra/
+├── docker/
+├── kubernetes/
+└── deployment/
+
+docs/
+├── architecture/
+├── diagrams/
+├── workflows/
+└── prd/
 ```
-
----
-
-# Current Status
-
-Current MVP implementation includes:
-
-* foundational backend architecture,
-* risk analysis engine,
-* mitigation planning workflows,
-* execution automation framework,
-* and agent orchestration pipeline.
-
-Compliance automation and advanced analytics are currently under development.
 
 ---
 
@@ -149,12 +323,13 @@ python3 -m venv .venv
 source .venv/bin/activate
 
 pip install -r requirements.txt
+
 cp .env.example .env
 
 uvicorn app.main:app --reload
 ```
 
-API available at:
+Backend available at:
 
 ```text
 http://localhost:8000
@@ -168,11 +343,90 @@ http://localhost:8000/api/v1/health
 
 ---
 
+## Frontend Setup
+
+```bash
+cd frontend
+
+npm install
+
+npm run dev
+```
+
+Frontend available at:
+
+```text
+http://localhost:3000
+```
+
+---
+
+# Environment Variables
+
+Example backend configuration:
+
+```env
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+REDIS_HOST=localhost
+QDRANT_HOST=localhost
+OLLAMA_BASE_URL=http://localhost:11434
+```
+
+---
+
+# Demo Highlights
+
+The MVP currently demonstrates:
+
+- Autonomous risk detection
+- Supplier anomaly analysis
+- AI mitigation reasoning
+- Supplier alternative discovery
+- RFQ workflow automation
+- Approval workflow orchestration
+- Real-time operational dashboards
+
+---
+
+# Future Roadmap
+
+- Full compliance automation
+- SAP / ERP integrations
+- Predictive disruption forecasting
+- Autonomous supplier negotiations
+- Multi-modal document intelligence
+- AI contract analysis
+- Real-time global trade monitoring
+- Advanced simulation engines
+- Enterprise-grade observability
+
+---
+
+# AMD AI Hackathon Focus
+
+This project demonstrates how accelerated AI infrastructure and agentic workflows can transform enterprise supply chain operations through:
+
+- autonomous decision systems,
+- operational intelligence,
+- scalable multi-agent orchestration,
+- and real-time mitigation automation.
+
+---
+
 # Vision
 
-SupplyChain Guardian aims to evolve into a fully autonomous enterprise resilience platform capable of proactively preventing supply chain failures before they impact operations.
+SupplyChain Guardian aims to become the autonomous operating system for enterprise supply chain resilience.
 
-The long-term goal is to combine AI agents, predictive analytics, and autonomous execution workflows into a unified operational intelligence platform for global supply chains.
+A future where AI agents continuously protect global operations before disruptions become business crises.
+
+---
+
+# Contributors
+
+Built with passion for the AMD AI Hackathon.
+
+Contributions, ideas, and collaboration are welcome.
 
 ---
 
